@@ -1,0 +1,40 @@
+# Environment files
+.env
+*.log
+
+# Uploads and temporary files
+uploads/*
+!uploads/.gitkeep
+
+# SSL certificates (regenerate these)
+nginx/ssl/*.key
+nginx/ssl/*.crt
+
+# Logs
+logs/*
+!logs/.gitkeep
+
+# Dependencies
+node_modules/
+vendor/
+
+# System files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-*
+
+# Docker volumes data
+mysql_data/
+redis_data/
+
+# Temporary files
+*.tmp
+*.bak
+*.backup
+*~
