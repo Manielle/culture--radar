@@ -351,6 +351,16 @@ function validateEmail(email) {
     return re.test(email);
 }
 
+function validatePassword(password) {
+    const requirements = {
+        length: password.length >= 8,
+        lowercase: /[a-z]/.test(password),
+        uppercase: /[A-Z]/.test(password),
+        digit: /\d/.test(password)
+    };
+    return Object.values(requirements).every(req => req);
+}
+
 function showNotification(message, type = 'info') {
     // Create notification element
     const notification = document.createElement('div');

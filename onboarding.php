@@ -1,5 +1,17 @@
 <?php
+// Sécurité HTTP headers
+header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: DENY');
+header('X-XSS-Protection: 1; mode=block');
+header('Referrer-Policy: no-referrer');
+header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+
 session_start();
+
+// Generate CSRF token if not exists
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
 
 // Load configuration
 require_once __DIR__ . '/config.php';
@@ -15,6 +27,11 @@ $success = '';
 
 // Handle onboarding form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Verify CSRF token
+    if (!isset($_POST['csrf']) || $_POST['csrf'] !== $_SESSION['csrf_token']) {
+        die('Erreur de vérification de sécurité (CSRF).');
+    }
+    
     $preferences = $_POST['preferences'] ?? [];
     $location = trim($_POST['location'] ?? '');
     $budget = $_POST['budget'] ?? 'high';
@@ -610,6 +627,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php endif; ?>
 
                 <form method="POST" action="/onboarding.php" id="onboarding-form">
+                    <input type="hidden" name="csrf" value="<?php echo $_SESSION['csrf_token']; ?>">
                     <!-- Step 1: Welcome -->
                     <div class="step-content active" id="step-1">
                         <div class="welcome-content">

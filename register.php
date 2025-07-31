@@ -1,5 +1,27 @@
 <?php
+// Sécurité HTTP headers
+header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: DENY');
+header('X-XSS-Protection: 1; mode=block');
+header('Referrer-Policy: no-referrer');
+header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+
 session_start();
+
+// Generate CSRF token if not exists
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
+// Initialize register attempts counter
+if (!isset($_SESSION['register_attempts'])) {
+    $_SESSION['register_attempts'] = 0;
+}
+
+// Reset attempts after 15 minutes
+if (isset($_SESSION['last_register_attempt']) && (time() - $_SESSION['last_register_attempt']) > 900) {
+    $_SESSION['register_attempts'] = 0;
+}
 
 // Load configuration
 require_once __DIR__ . '/config.php';
@@ -15,6 +37,19 @@ $success = '';
 
 // Handle registration form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Check rate limit
+    $_SESSION['register_attempts']++;
+    $_SESSION['last_register_attempt'] = time();
+    
+    if ($_SESSION['register_attempts'] > 5) {
+        die('Trop de tentatives, réessayez dans quelques minutes.');
+    }
+    
+    // Verify CSRF token
+    if (!isset($_POST['csrf']) || $_POST['csrf'] !== $_SESSION['csrf_token']) {
+        die('Erreur de vérification de sécurité (CSRF).');
+    }
+    
     $name = trim($_POST['name'] ?? '');
     $email = filter_var($_POST['email'] ?? '', FILTER_SANITIZE_EMAIL);
     $password = $_POST['password'] ?? '';
@@ -70,6 +105,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['user_id'] = $userId;
                 $_SESSION['user_name'] = $name;
                 $_SESSION['user_email'] = $email;
+                
+                // Reset register attempts on successful registration
+                $_SESSION['register_attempts'] = 0;
                 
                 // Redirect to onboarding
                 header('Location: /onboarding.php');
@@ -516,6 +554,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
             
             <form method="POST" action="/register.php" class="register-form">
+                <input type="hidden" name="csrf" value="<?php echo $_SESSION['csrf_token']; ?>">
                 <div class="form-group">
                     <label for="name" class="form-label">Nom complet *</label>
                     <input 

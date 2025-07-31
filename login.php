@@ -1,5 +1,27 @@
 <?php
+// Sécurité HTTP headers
+header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: DENY');
+header('X-XSS-Protection: 1; mode=block');
+header('Referrer-Policy: no-referrer');
+header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+
 session_start();
+
+// Generate CSRF token if not exists
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
+// Initialize login attempts counter
+if (!isset($_SESSION['login_attempts'])) {
+    $_SESSION['login_attempts'] = 0;
+}
+
+// Reset attempts after 15 minutes
+if (isset($_SESSION['last_attempt_time']) && (time() - $_SESSION['last_attempt_time']) > 900) {
+    $_SESSION['login_attempts'] = 0;
+}
 
 // Load configuration
 require_once __DIR__ . '/config.php';
@@ -15,6 +37,19 @@ $success = '';
 
 // Handle login form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Check rate limit
+    $_SESSION['login_attempts']++;
+    $_SESSION['last_attempt_time'] = time();
+    
+    if ($_SESSION['login_attempts'] > 5) {
+        die('Trop de tentatives, réessayez dans quelques minutes.');
+    }
+    
+    // Verify CSRF token
+    if (!isset($_POST['csrf']) || $_POST['csrf'] !== $_SESSION['csrf_token']) {
+        die('Erreur de vérification de sécurité (CSRF).');
+    }
+    
     $email = filter_var($_POST['email'] ?? '', FILTER_SANITIZE_EMAIL);
     $password = $_POST['password'] ?? '';
     
@@ -39,6 +74,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['user_name'] = $user['name'];
                 $_SESSION['user_email'] = $user['email'];
+                
+                // Reset login attempts on successful login
+                $_SESSION['login_attempts'] = 0;
                 
                 // Update last login
                 $stmt = $pdo->prepare("UPDATE users SET last_login = NOW() WHERE id = ?");
@@ -445,6 +483,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
             
             <form method="POST" action="/login.php" class="login-form">
+                <input type="hidden" name="csrf" value="<?php echo $_SESSION['csrf_token']; ?>">
                 <div class="form-group">
                     <label for="email" class="form-label">Adresse email</label>
                     <input 

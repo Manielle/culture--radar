@@ -4,6 +4,11 @@
  * Handles environment variables and application configuration
  */
 
+// Secure session configuration
+ini_set('session.cookie_httponly', 1);
+ini_set('session.cookie_secure', 1); // à activer en HTTPS uniquement
+ini_set('session.use_strict_mode', 1);
+
 class Config {
     private static $config = [];
     private static $loaded = false;
