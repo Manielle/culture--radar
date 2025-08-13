@@ -1,129 +1,46 @@
 version: '3.8'
 
 services:
-  # Web Application
-  app:
+  web:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: culture_radar_app
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - .:/var/www/html
-      - ./uploads:/var/www/html/uploads
-      - ./logs:/var/log/apache2
-    environment:
-      - APP_ENV=production
-      - DB_HOST=database
-      - DB_NAME=culture_radar
-      - DB_USER=culture_user
-      - DB_PASS=secure_password_here
-    depends_on:
-      - database
-      - redis
-    networks:
-      - culture_radar_network
-
-  # MySQL Database
-  database:
-    image: mysql:8.0
-    container_name: culture_radar_db
-    restart: unless-stopped
-    ports:
-      - "3306:3306"
-    environment:
-      MYSQL_ROOT_PASSWORD: root_password_here
-      MYSQL_DATABASE: culture_radar
-      MYSQL_USER: culture_user
-      MYSQL_PASSWORD: secure_password_here
-    volumes:
-      - mysql_data:/var/lib/mysql
-      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
-    command: --default-authentication-plugin=mysql_native_password
-    networks:
-      - culture_radar_network
-
-  # Redis for Caching
-  redis:
-    image: redis:7-alpine
-    container_name: culture_radar_redis
-    restart: unless-stopped
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    command: redis-server --appendonly yes --requirepass redis_password_here
-    networks:
-      - culture_radar_network
-
-  # phpMyAdmin (Development only)
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin:latest
-    container_name: culture_radar_phpmyadmin
-    restart: unless-stopped
+    container_name: php_web
     ports:
       - "8080:80"
+    volumes:
+      - ./:/var/www/html
     environment:
-      PMA_HOST: database
-      PMA_USER: culture_user
-      PMA_PASSWORD: secure_password_here
-    depends_on:
-      - database
+      - APACHE_DOCUMENT_ROOT=/var/www/html
+      # Variables pour Railway MySQL
+      - DB_HOST=centerbeam.proxy.rlwy.net
+      - DB_PORT=48330
+      - DB_NAME=railway
+      - DB_USER=root
+      - DB_PASSWORD=tBixYXRKGkGAZuyxGHFZzaTxQAGXvJJH
     networks:
-      - culture_radar_network
-    profiles:
-      - development
+      - php_network
 
-  # Nginx Load Balancer (Production)
-  nginx:
-    image: nginx:alpine
-    container_name: culture_radar_nginx
-    restart: unless-stopped
+  # Vous pouvez commenter ou supprimer le service db local
+  # db:
+  #   image: mysql:8.0
+  #   ...
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: php_phpmyadmin
+    restart: always
     ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
-      - ./logs/nginx:/var/log/nginx
-    depends_on:
-      - app
-    networks:
-      - culture_radar_network
-    profiles:
-      - production
-
-  # AI Training Scheduler
-  scheduler:
-    build:
-      context: .
-      dockerfile: Dockerfile.scheduler
-    container_name: culture_radar_scheduler
-    restart: unless-stopped
-    volumes:
-      - .:/var/www/html
-      - ./logs:/var/log/scheduler
+      - "8081:80"
     environment:
-      - APP_ENV=production
-      - DB_HOST=database
-      - DB_NAME=culture_radar
-      - DB_USER=culture_user
-      - DB_PASS=secure_password_here
-    depends_on:
-      - database
-      - app
+      # Connexion à Railway
+      PMA_HOST: centerbeam.proxy.rlwy.net
+      PMA_PORT: 48330
+      PMA_USER: root
+      PMA_PASSWORD: tBixYXRKGkGAZuyxGHFZzaTxQAGXvJJH
     networks:
-      - culture_radar_network
-
-volumes:
-  mysql_data:
-    driver: local
-  redis_data:
-    driver: local
+      - php_network
 
 networks:
-  culture_radar_network:
+  php_network:
     driver: bridge
