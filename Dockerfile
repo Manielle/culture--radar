@@ -1,20 +1,33 @@
-FROM ubuntu:22.04
+FROM php:8.2-apache
 
-# Installer les dépendances nécessaires
-RUN apt-get update && apt-get install -y \
-    curl \
-    git \
-    python3 \
-    python3-pip \
-    nodejs \
-    npm \
-    && rm -rf /var/lib/apt/lists/*
+# Install required PHP extensions
+RUN docker-php-ext-install pdo pdo_mysql
 
-# Créer un répertoire de travail
-WORKDIR /workspace
+# Copy all application source code
+COPY . /var/www/html/
 
-# Exposer un port si nécessaire
-EXPOSE 8080
+# Remove unnecessary files from the container
+RUN rm -rf /var/www/html/docker-compose* \
+    /var/www/html/Dockerfile \
+    /var/www/html/README* \
+    /var/www/html/*.md \
+    /var/www/html/*.pdf \
+    /var/www/html/*.docx \
+    /var/www/html/*.pptx \
+    /var/www/html/desktop.ini
 
-# Commande par défaut
-CMD ["/bin/bash"]
+# Create cache directories
+RUN mkdir -p /var/www/html/cache/events \
+    /var/www/html/cache/weather \
+    /var/www/html/cache/transport
+
+# Set proper permissions
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 /var/www/html \
+    && chmod -R 777 /var/www/html/cache
+
+# Expose port 80
+EXPOSE 80
+
+# Start Apache in foreground
+CMD ["apache2-foreground"]
