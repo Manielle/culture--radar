@@ -69,7 +69,7 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
     <header class="header" role="banner">
         <nav class="nav" role="navigation" aria-label="Navigation principale">
             <a href="/" class="logo" aria-label="Culture Radar - Retour à l'accueil">
-                <div class="location-pin-icon" aria-hidden="true"></div>
+                <img src="/logo culture radar.PNG" alt="Culture Radar Logo" class="logo-icon" style="height: 40px; width: auto; margin-right: 10px;">
                 Culture Radar
             </a>
             

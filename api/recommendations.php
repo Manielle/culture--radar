@@ -1,239 +1,174 @@
 <?php
 /**
- * AI Recommendations API Endpoint
- * Provides personalized event recommendations using machine learning
+ * Recommendations API Endpoint
+ * Provides personalized event recommendations
  */
 
-session_start();
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST');
-header('Access-Control-Allow-Headers: Content-Type');
+header('X-Content-Type-Options: nosniff');
 
-// Load configuration
-require_once __DIR__ . '/../config.php';
+require_once dirname(__DIR__) . '/config.php';
+require_once dirname(__DIR__) . '/classes/Auth.php';
+require_once dirname(__DIR__) . '/classes/RecommendationEngine.php';
 
-// Require the recommendation engine
-require_once __DIR__ . '/../classes/RecommendationEngine.php';
+$auth = new Auth();
+$response = ['success' => false, 'message' => 'Invalid request'];
 
-try {
-    $dbConfig = Config::database();
-    $dsn = "mysql:host=" . $dbConfig['host'] . ";dbname=" . $dbConfig['name'] . ";charset=" . $dbConfig['charset'];
-    $pdo = new PDO($dsn, $dbConfig['user'], $dbConfig['pass']);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    
-    // Check if user is logged in
-    if (!isset($_SESSION['user_id'])) {
-        http_response_code(401);
-        echo json_encode(['error' => 'Authentication required']);
-        exit;
-    }
-    
-    $userId = $_SESSION['user_id'];
-    $method = $_SERVER['REQUEST_METHOD'];
-    
-    if ($method === 'GET') {
-        $action = $_GET['action'] ?? 'recommend';
-        $limit = min(50, max(1, (int)($_GET['limit'] ?? 10))); // Between 1 and 50
-        
-        $engine = new RecommendationEngine($pdo, $userId);
-        
-        switch ($action) {
-            case 'recommend':
-                $excludeViewed = isset($_GET['exclude_viewed']) ? (bool)$_GET['exclude_viewed'] : true;
-                $recommendations = $engine->generateRecommendations($limit, $excludeViewed);
-                
-                // Format for frontend
-                $response = [
-                    'success' => true,
-                    'recommendations' => array_map(function($event) {
-                        return [
-                            'id' => $event['id'],
-                            'title' => $event['title'],
-                            'description' => $event['description'],
-                            'category' => $event['category'],
-                            'venue_name' => $event['venue_name'],
-                            'city' => $event['city'],
-                            'start_date' => $event['start_date'],
-                            'end_date' => $event['end_date'],
-                            'price' => $event['price'],
-                            'is_free' => (bool)$event['is_free'],
-                            'image_url' => $event['image_url'],
-                            'ai_score' => round($event['ai_score'], 1),
-                            'match_percentage' => round($event['ai_score']),
-                            'reasons' => $event['match_reasons'],
-                            'created_at' => $event['created_at']
-                        ];
-                    }, $recommendations),
-                    'total_count' => count($recommendations),
-                    'user_id' => $userId,
-                    'generated_at' => date('Y-m-d H:i:s')
-                ];
-                
-                echo json_encode($response);
-                break;
-                
-            case 'trending':
-                $trending = $engine->getTrendingEvents($limit);
-                echo json_encode([
-                    'success' => true,
-                    'trending_events' => $trending,
-                    'count' => count($trending)
-                ]);
-                break;
-                
-            case 'similar_users':
-                $similarUsers = $engine->findSimilarUsers($limit);
-                echo json_encode([
-                    'success' => true,
-                    'similar_users' => $similarUsers,
-                    'count' => count($similarUsers)
-                ]);
-                break;
-                
-            case 'explain':
-                $eventId = (int)($_GET['event_id'] ?? 0);
-                if (!$eventId) {
-                    http_response_code(400);
-                    echo json_encode(['error' => 'Event ID required']);
-                    exit;
-                }
-                
-                // Get event details
-                $stmt = $pdo->prepare("SELECT * FROM events WHERE id = ?");
-                $stmt->execute([$eventId]);
-                $event = $stmt->fetch(PDO::FETCH_ASSOC);
-                
-                if (!$event) {
-                    http_response_code(404);
-                    echo json_encode(['error' => 'Event not found']);
-                    exit;
-                }
-                
-                $score = $engine->calculateEventScore($event);
-                
-                echo json_encode([
-                    'success' => true,
-                    'event_id' => $eventId,
-                    'ai_score' => round($score, 1),
-                    'explanation' => [
-                        'preference_match' => round($engine->calculateEventScore($event) * 0.4, 1),
-                        'location_score' => 'Based on proximity to your location',
-                        'price_compatibility' => 'Fits within your budget range',
-                        'social_signals' => 'Popular among users with similar tastes',
-                        'novelty_factor' => 'Balance of familiar and new experiences'
-                    ]
-                ]);
-                break;
-                
-            default:
-                http_response_code(400);
-                echo json_encode(['error' => 'Invalid action']);
-        }
-        
-    } elseif ($method === 'POST') {
-        $input = json_decode(file_get_contents('php://input'), true);
-        $action = $input['action'] ?? '';
-        
-        $engine = new RecommendationEngine($pdo, $userId);
-        
-        switch ($action) {
-            case 'feedback':
-                $eventId = (int)($input['event_id'] ?? 0);
-                $rating = (int)($input['rating'] ?? 0);
-                $interactionType = $input['interaction_type'] ?? 'view';
-                
-                if (!$eventId) {
-                    http_response_code(400);
-                    echo json_encode(['error' => 'Event ID required']);
-                    exit;
-                }
-                
-                // Record user interaction
-                $stmt = $pdo->prepare("
-                    INSERT INTO user_interactions 
-                    (user_id, event_id, interaction_type, rating, created_at)
-                    VALUES (?, ?, ?, ?, NOW())
-                    ON DUPLICATE KEY UPDATE
-                    rating = VALUES(rating),
-                    created_at = NOW()
-                ");
-                
-                $stmt->execute([
-                    $userId,
-                    $eventId,
-                    $interactionType,
-                    $rating > 0 ? $rating : null
-                ]);
-                
-                // Update user preferences based on behavior
-                $engine->updatePreferencesFromBehavior();
-                
-                echo json_encode([
-                    'success' => true,
-                    'message' => 'Feedback recorded successfully'
-                ]);
-                break;
-                
-            case 'batch_feedback':
-                $interactions = $input['interactions'] ?? [];
-                
-                if (empty($interactions)) {
-                    http_response_code(400);
-                    echo json_encode(['error' => 'No interactions provided']);
-                    exit;
-                }
-                
-                $stmt = $pdo->prepare("
-                    INSERT INTO user_interactions 
-                    (user_id, event_id, interaction_type, rating, metadata, created_at)
-                    VALUES (?, ?, ?, ?, ?, NOW())
-                ");
-                
-                $recorded = 0;
-                foreach ($interactions as $interaction) {
-                    if (!isset($interaction['event_id']) || !isset($interaction['type'])) {
-                        continue;
-                    }
-                    
-                    $stmt->execute([
-                        $userId,
-                        (int)$interaction['event_id'],
-                        $interaction['type'],
-                        $interaction['rating'] ?? null,
-                        isset($interaction['metadata']) ? json_encode($interaction['metadata']) : null
-                    ]);
-                    $recorded++;
-                }
-                
-                echo json_encode([
-                    'success' => true,
-                    'message' => "Recorded $recorded interactions"
-                ]);
-                break;
-                
-            default:
-                http_response_code(400);
-                echo json_encode(['error' => 'Invalid action']);
-        }
-    } else {
-        http_response_code(405);
-        echo json_encode(['error' => 'Method not allowed']);
-    }
-    
-} catch (PDOException $e) {
-    http_response_code(500);
-    echo json_encode([
-        'error' => 'Database error',
-        'message' => 'Failed to process request'
-    ]);
-    error_log("AI Recommendations API error: " . $e->getMessage());
-} catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode([
-        'error' => 'Server error',
-        'message' => $e->getMessage()
-    ]);
-    error_log("AI Recommendations API error: " . $e->getMessage());
+// Get request parameters
+$action = $_GET['action'] ?? '';
+$input = json_decode(file_get_contents('php://input'), true) ?? [];
+
+// Get current user if logged in
+$currentUser = null;
+if ($auth->isLoggedIn()) {
+    $currentUser = $auth->getCurrentUser();
 }
-?>
+
+$recommender = new RecommendationEngine($currentUser ? $currentUser['id'] : null);
+
+switch ($action) {
+    case 'personalized':
+        if (!$currentUser) {
+            $response = [
+                'success' => false,
+                'message' => 'Authentication required for personalized recommendations'
+            ];
+            break;
+        }
+        
+        $params = [
+            'limit' => $_GET['limit'] ?? 10,
+            'filters' => [
+                'lat' => $_GET['lat'] ?? null,
+                'lng' => $_GET['lng'] ?? null,
+                'date' => $_GET['date'] ?? null,
+                'categories' => isset($_GET['categories']) ? explode(',', $_GET['categories']) : []
+            ],
+            'include_reasons' => true
+        ];
+        
+        $recommendations = $recommender->getRecommendations($params);
+        
+        $response = [
+            'success' => true,
+            'recommendations' => $recommendations,
+            'user_preferences' => $currentUser['preferences'] ?? []
+        ];
+        break;
+        
+    case 'public':
+        // Public recommendations without login
+        $params = [
+            'location' => $_GET['location'] ?? 'Paris',
+            'categories' => isset($_GET['categories']) ? explode(',', $_GET['categories']) : [],
+            'limit' => $_GET['limit'] ?? 10
+        ];
+        
+        $recommendations = $recommender->getPublicRecommendations($params);
+        
+        $response = [
+            'success' => true,
+            'recommendations' => $recommendations
+        ];
+        break;
+        
+    case 'trending':
+        $location = $_GET['location'] ?? 'Paris';
+        $limit = $_GET['limit'] ?? 6;
+        
+        $trending = $recommender->getTrendingEvents($location, $limit);
+        
+        $response = [
+            'success' => true,
+            'trending' => $trending
+        ];
+        break;
+        
+    case 'similar':
+        // Get similar events to a specific event
+        $eventId = $_GET['event_id'] ?? null;
+        
+        if (!$eventId) {
+            $response = ['success' => false, 'message' => 'Event ID required'];
+            break;
+        }
+        
+        // This would be implemented in RecommendationEngine
+        $response = [
+            'success' => true,
+            'message' => 'Similar events feature coming soon'
+        ];
+        break;
+        
+    case 'feedback':
+        if (!$currentUser) {
+            $response = ['success' => false, 'message' => 'Authentication required'];
+            break;
+        }
+        
+        // Record user feedback for learning
+        $eventId = $input['event_id'] ?? null;
+        $action = $input['action'] ?? null; // 'like', 'dislike', 'attend', 'skip'
+        
+        if (!$eventId || !$action) {
+            $response = ['success' => false, 'message' => 'Event ID and action required'];
+            break;
+        }
+        
+        try {
+            $db = Database::getInstance()->getConnection();
+            
+            // Record interaction
+            $stmt = $db->prepare(•
+                INSERT INTO user_event_history (user_id, event_id, action, created_at)
+                VALUES (:user_id, :event_id, :action, NOW())
+                ON DUPLICATE KEY UPDATE action = :action, updated_at = NOW()
+            •);
+            
+            $stmt->execute([
+                ':user_id' => $currentUser['id'],
+                ':event_id' => $eventId,
+                ':action' => $action
+            ]);
+            
+            $response = [
+                'success' => true,
+                'message' => 'Feedback recorded successfully'
+            ];
+            
+        } catch (Exception $e) {
+            $response = [
+                'success' => false,
+                'message' => 'Failed to record feedback'
+            ];
+        }
+        break;
+        
+    case 'categories':
+        // Get available event categories
+        $categories = [
+            ['id' => 'musique', 'name' => 'Musique', 'icon' => '🎵'],
+            ['id' => 'theatre', 'name' => 'Théâtre', 'icon' => '🎭'],
+            ['id' => 'exposition', 'name' => 'Exposition', 'icon' => '🖼️'],
+            ['id' => 'cinema', 'name' => 'Cinéma', 'icon' => '🎬'],
+            ['id' => 'danse', 'name' => 'Danse', 'icon' => '💃'],
+            ['id' => 'conference', 'name' => 'Conférence', 'icon' => '🎤'],
+            ['id' => 'festival', 'name' => 'Festival', 'icon' => '🎪'],
+            ['id' => 'litterature', 'name' => 'Littérature', 'icon' => '📚']
+        ];
+        
+        $response = [
+            'success' => true,
+            'categories' => $categories
+        ];
+        break;
+        
+    default:
+        $response = [
+            'success' => false,
+            'message' => 'Unknown action'
+        ];
+}
+
+echo json_encode($response);
+exit;

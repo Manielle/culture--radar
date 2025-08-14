@@ -460,8 +460,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="login-card">
             <div class="login-header">
                 <a href="/" class="login-logo">
-                    <div class="compass-icon">🧭</div>
-                    Culture Radar
+                    <img src="/logo culture radar.PNG" alt="Culture Radar Logo" style="height: 50px; width: auto; margin-bottom: 10px;">
+                    <span>Culture Radar</span>
                 </a>
                 
                 <h1 class="login-title">Bon retour !</h1>
