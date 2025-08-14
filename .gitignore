@@ -1,40 +1,82 @@
-# Environment files
+﻿# Variables d'environnement et configurations sensibles
 .env
+.env.*
+!.env.example
+config.php
+config.local.php
+*.env.local
+*.env.production
+
+# Base de données
+*.sql
+*.sqlite
+*.db
+database.php
+
+# Fichiers de sauvegarde et temporaires
+*.backup
+*.bak
+*.tmp
+*.temp
+*.cache
 *.log
+error_log
+debug.log
 
-# Uploads and temporary files
-uploads/*
-!uploads/.gitkeep
+# Dossiers de cache et sessions
+cache/
+sessions/
+temp/
+tmp/
+logs/
 
-# SSL certificates (regenerate these)
-nginx/ssl/*.key
-nginx/ssl/*.crt
-
-# Logs
-logs/*
-!logs/.gitkeep
-
-# Dependencies
-node_modules/
-vendor/
-
-# System files
+# Fichiers système
 .DS_Store
 Thumbs.db
+desktop.ini
 *.swp
 *.swo
+*~
 
-# IDE files
+# IDE et éditeurs
 .vscode/
 .idea/
 *.sublime-*
+.claude/
 
-# Docker volumes data
-mysql_data/
-redis_data/
+# Documents personnels/confidentiels
+*.docx
+*.doc
+*.pdf
+*.pptx
+*.xlsx
+*.xls
 
-# Temporary files
-*.tmp
-*.bak
-*.backup
-*~
+# Dossiers de développement
+node_modules/
+vendor/
+_ARCHIVE/
+backup/
+old/
+
+# Fichiers de build
+dist/
+build/
+
+# Clés et certificats
+*.pem
+*.key
+*.crt
+*.cer
+ssl/
+
+# Fichiers spécifiques au projet
+ADD_YOUR_API_KEYS.md
+culture_radar.sql
+setup-database.php
+update-for-mamp.php
+
+# Fichiers avec mots de passe
+passwords.txt
+credentials.json
+secrets.yml
