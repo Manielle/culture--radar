@@ -1,5 +1,0 @@
-{
-  "providers": ["php"],
-  "buildCommand": "echo 'Build complete'",
-  "startCommand": "php -S 0.0.0.0:$PORT"
-}
