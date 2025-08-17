@@ -3,8 +3,14 @@ session_start();
 
 // Load configuration
 require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/services/OpenAgendaService.php';
-require_once __DIR__ . '/services/GoogleEventsService.php';
+
+// Charger les services s'ils existent
+if (file_exists(__DIR__ . '/services/OpenAgendaService.php')) {
+    require_once __DIR__ . '/services/OpenAgendaService.php';
+}
+if (file_exists(__DIR__ . '/services/GoogleEventsService.php')) {
+    require_once __DIR__ . '/services/GoogleEventsService.php';
+}
 
 // Initialize database connection
 try {
@@ -21,14 +27,15 @@ $isLoggedIn = isset($_SESSION['user_id']);
 $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
 
 // Fetch events from Google Events API for the search section
-$googleEventsService = new GoogleEventsService();
 $searchEvents = [];
 
-try {
-    // L'API fonctionne maintenant avec gl=us !
+// Vérifier si le service existe
+if (class_exists('GoogleEventsService')) {
+    $googleEventsService = new GoogleEventsService();
     $USE_DEMO = false; // false = API réelle (fonctionne!), true = démo
     
-    if ($USE_DEMO) {
+    try {
+        if ($USE_DEMO) {
         // Utiliser les événements de démonstration
         $allEvents = $googleEventsService->getDemoEvents('Paris');
         
@@ -135,6 +142,16 @@ try {
         }),
         'nearby' => $demoEvents
     ];
+    }
+} else {
+    // Si GoogleEventsService n'existe pas, utiliser des événements de démo statiques
+    $searchEvents = [
+        'all' => [],
+        'today' => [],
+        'weekend' => [],
+        'free' => [],
+        'nearby' => []
+    ];
 }
 
 // Fetch real events from different cities
@@ -142,7 +159,8 @@ $realEvents = [];
 $cities = ['Paris', 'Lyon', 'Bordeaux', 'Toulouse'];
 
 try {
-    $openAgendaService = new OpenAgendaService();
+    if (class_exists('OpenAgendaService')) {
+        $openAgendaService = new OpenAgendaService();
     
     foreach ($cities as $city) {
         $cityEvents = $openAgendaService->getEventsByLocation([
@@ -183,6 +201,7 @@ try {
         }
         break; // Prevent infinite loop
     }
+    } // Fermer le if (class_exists('OpenAgendaService'))
     
 } catch (Exception $e) {
     error_log("Error fetching events for landing page: " . $e->getMessage());
