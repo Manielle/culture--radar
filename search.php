@@ -224,19 +224,30 @@ $filterType = isset($_GET['filter']) ? htmlspecialchars($_GET['filter']) : 'all'
         </div>
     </div>
     
+    <script src="assets/js/main.js"></script>
     <script>
         // Fonction pour appliquer un filtre
         function applyFilter(filter) {
-            const searchQuery = document.querySelector('.search-input').value;
-            const params = new URLSearchParams();
-            if (searchQuery) params.set('q', searchQuery);
-            params.set('filter', filter);
-            window.location.href = '?' + params.toString();
+            if (window.eventFilters) {
+                window.eventFilters.applyFilter(filter);
+            } else {
+                const searchQuery = document.querySelector('.search-input').value;
+                const params = new URLSearchParams();
+                if (searchQuery) params.set('q', searchQuery);
+                params.set('filter', filter);
+                window.location.href = '?' + params.toString();
+            }
         }
         
         <?php if ($searchQuery || $filterType !== 'all'): ?>
-        // Recherche et filtrage avec données de démonstration
-        setTimeout(() => {
+        // Initialize filters with search parameters
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.eventFilters) {
+                window.eventFilters.currentFilter = '<?php echo $filterType; ?>';
+                window.eventFilters.loadEvents();
+            } else {
+                // Fallback to old system
+                setTimeout(() => {
             const resultsContainer = document.getElementById('searchResults');
             let mockResults = [
                 {
@@ -320,7 +331,9 @@ $filterType = isset($_GET['filter']) ? htmlspecialchars($_GET['filter']) : 'all'
             // Mettre à jour le message de résultats
             document.querySelector('.results-header p').innerHTML = 
                 `${mockResults.length} événement${mockResults.length > 1 ? 's' : ''} trouvé${mockResults.length > 1 ? 's' : ''}`;
-        }, 500);
+                }, 500);
+            }
+        });
         <?php endif; ?>
     </script>
 </body>

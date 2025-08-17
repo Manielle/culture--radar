@@ -105,40 +105,41 @@ function handleSearch(query) {
  * Initialize filter functionality
  */
 function initializeFilters() {
-    const filterChips = document.querySelectorAll('.filter-chip');
-    
-    filterChips.forEach(chip => {
-        chip.addEventListener('click', function() {
-            // Remove active class from all chips
-            filterChips.forEach(c => c.classList.remove('active'));
-            
-            // Add active class to clicked chip
-            this.classList.add('active');
-            
-            // Get filter value
-            const filterValue = this.dataset.filter;
-            handleFilter(filterValue);
-        });
-    });
-}
-
-/**
- * Handle filter functionality
- */
-function handleFilter(filter) {
-    console.log('Filtering by:', filter);
-    
-    // Add visual feedback
-    const activeChip = document.querySelector('.filter-chip.active');
-    if (activeChip) {
-        activeChip.style.transform = 'translateY(-2px) scale(1.05)';
-        setTimeout(() => {
-            activeChip.style.transform = '';
-        }, 200);
+    // Check if filters module is already loaded
+    if (window.eventFilters) {
+        console.log('Filters already initialized');
+        return;
     }
     
-    // Future: Apply actual filtering logic
-    // This could update the demo events or redirect to filtered results
+    // Check if script tag already exists
+    const existingScript = document.querySelector('script[src*="filters.js"]');
+    if (existingScript) {
+        console.log('Filters module already in DOM, waiting for load');
+        return;
+    }
+    
+    // Check if we're already loading
+    if (window.filtersLoading) {
+        console.log('Filters already loading');
+        return;
+    }
+    
+    // Mark as loading to prevent duplicate loads
+    window.filtersLoading = true;
+    
+    // Load the filters module
+    const script = document.createElement('script');
+    script.src = '/assets/js/filters.js';
+    script.async = false; // Ensure sequential loading
+    script.onload = () => {
+        console.log('Filters module loaded successfully');
+        window.filtersLoading = false;
+    };
+    script.onerror = () => {
+        console.error('Failed to load filters module');
+        window.filtersLoading = false;
+    };
+    document.head.appendChild(script);
 }
 
 /**
@@ -514,7 +515,15 @@ const Storage = {
     get(key, defaultValue = null) {
         try {
             const item = localStorage.getItem(key);
-            return item ? JSON.parse(item) : defaultValue;
+            if (!item) return defaultValue;
+            
+            // Try to parse as JSON, if it fails return as string
+            try {
+                return JSON.parse(item);
+            } catch {
+                // If JSON parsing fails, return the raw string
+                return item;
+            }
         } catch (error) {
             console.error('Storage error:', error);
             return defaultValue;

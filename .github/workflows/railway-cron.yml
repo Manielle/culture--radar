@@ -1,0 +1,35 @@
+name: Scraping Automatique Culture Radar
+
+on:
+  schedule:
+    # Scraping quotidien à 6h00 UTC (7h00 ou 8h00 heure française selon la saison)
+    - cron: '0 6 * * *'
+  workflow_dispatch: # Permet de lancer manuellement
+
+jobs:
+  scrape-events:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.1'
+        extensions: mbstring, pdo, pdo_mysql, json
+    
+    - name: Lancer le scraping
+      env:
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
+      run: |
+        php cron/scrape-events.php
+    
+    - name: Commiter les changements (si fichiers statiques)
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add -A
+        git diff --quiet && git diff --staged --quiet || git commit -m "🤖 Mise à jour automatique des événements"
+        git push

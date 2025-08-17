@@ -531,7 +531,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="register-card">
             <div class="register-header">
                 <a href="/" class="register-logo">
-                    <img src="/logo culture radar.PNG" alt="Culture Radar Logo" style="height: 50px; width: auto; margin-bottom: 10px;">
+                    <img src="/logo-culture-radar.png" alt="Culture Radar Logo" style="height: 50px; width: auto; margin-bottom: 10px;">
                     <span>Culture Radar</span>
                 </a>
                 

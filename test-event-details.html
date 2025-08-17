@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Event Details</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .event-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        .event-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .event-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .event-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .event-meta {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .category-tag {
+            display: inline-block;
+            padding: 4px 8px;
+            background: #667eea;
+            color: white;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .test-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test des Pages d'Événements</h1>
+    
+    <div class="test-info">
+        <strong>Test:</strong> Cliquez sur n'importe quel événement pour voir sa page de détails.
+        <br>Chaque événement génère une page unique basée sur son ID.
+    </div>
+    
+    <h2>Événements de Test</h2>
+    <div class="event-grid" id="events">
+        <!-- Events will be added here -->
+    </div>
+    
+    <script>
+        // Generate test events
+        const eventTypes = [
+            { prefix: 'event-68a11', title: 'Concert Jazz au Sunset', category: 'concert', venue: 'Le Sunset-Sunside', price: '35€' },
+            { prefix: 'event-68a12', title: 'Exposition Monet', category: 'exposition', venue: 'Musée de l\'Orangerie', price: '12€' },
+            { prefix: 'event-68a13', title: 'Festival Électro', category: 'festival', venue: 'La Villette', price: 'Gratuit' },
+            { prefix: 'event-68a14', title: 'Le Malade Imaginaire', category: 'théâtre', venue: 'Comédie-Française', price: '45€' },
+            { prefix: 'event-68a15', title: 'Ballet du Bolchoï', category: 'danse', venue: 'Opéra Garnier', price: '65€' }
+        ];
+        
+        const container = document.getElementById('events');
+        
+        // Generate 10 test events
+        for (let i = 0; i < 10; i++) {
+            const type = eventTypes[i % eventTypes.length];
+            const eventId = type.prefix + Math.random().toString(36).substr(2, 9);
+            
+            const card = document.createElement('div');
+            card.className = 'event-card';
+            card.innerHTML = `
+                <div class="category-tag">${type.category}</div>
+                <div class="event-title">${type.title}</div>
+                <div class="event-meta">
+                    <div>📍 ${type.venue}</div>
+                    <div>📅 ${new Date(Date.now() + Math.random() * 30 * 24 * 60 * 60 * 1000).toLocaleDateString('fr-FR')}</div>
+                    <div>💶 ${type.price}</div>
+                    <div style="margin-top: 10px; color: #667eea;">
+                        <strong>ID: ${eventId}</strong>
+                    </div>
+                </div>
+            `;
+            
+            card.onclick = () => {
+                // Store event data in sessionStorage
+                const eventData = {
+                    id: eventId,
+                    title: type.title,
+                    category: type.category,
+                    venue: type.venue,
+                    price: type.price
+                };
+                sessionStorage.setItem('event_' + eventId, JSON.stringify(eventData));
+                
+                // Navigate to event details page
+                window.location.href = `/event-details.php?id=${encodeURIComponent(eventId)}`;
+            };
+            
+            container.appendChild(card);
+        }
+    </script>
+</body>
+</html>

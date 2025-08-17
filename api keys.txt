@@ -1,0 +1,4 @@
+openagenda:b6cea4ca5dcf4054ae4dd58482b389a1
+openweathermap:4f70ce6daf82c0e77d6128bc7fadf972
+google maps: AIzaSyClDB39stO1egB2L1P3aRymydGjPZ72uNo
+ratp prim:CNcmVauFV8dbo3sMWmemifQah7aopdsf

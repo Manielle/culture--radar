@@ -69,7 +69,7 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
     <header class="header" role="banner">
         <nav class="nav" role="navigation" aria-label="Navigation principale">
             <a href="/" class="logo" aria-label="Culture Radar - Retour à l'accueil">
-                <img src="/logo culture radar.PNG" alt="Culture Radar Logo" class="logo-icon" style="height: 40px; width: auto; margin-right: 10px;">
+                <img src="/logo-culture-radar.png" alt="Culture Radar Logo" class="logo-icon" style="height: 40px; width: auto; margin-right: 10px;">
                 Culture Radar
             </a>
             
@@ -145,52 +145,6 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
                         </a>
                     <?php endif; ?>
                 </div>
-                
-                <!-- Live Demo Preview -->
-                <div class="hero-demo" role="region" aria-labelledby="demo-title">
-                    <div class="demo-header">
-                        <h2 id="demo-title" class="sr-only">Aperçu en temps réel</h2>
-                        <span class="location-tag">
-                            <i class="fas fa-map-marker-alt"></i> Paris 11e • Maintenant
-                        </span>
-                        <span class="time-tag">Personnalisé pour vous</span>
-                    </div>
-                    
-                    <div class="demo-events" role="list">
-                        <div class="event-card demo-event" role="listitem">
-                            <div class="event-category-tag">Exposition</div>
-                            <h3 class="event-title">✨ Expo Photo "Paris Nocturne"</h3>
-                            <div class="event-meta">
-                                <span><i class="fas fa-location-dot"></i> Galerie Temps d'Art</span>
-                                <span><i class="fas fa-euro-sign"></i> Gratuit</span>
-                                <span><i class="fas fa-walking"></i> 5 min</span>
-                                <span class="match-score">97% match</span>
-                            </div>
-                        </div>
-                        
-                        <div class="event-card demo-event" role="listitem">
-                            <div class="event-category-tag">Concert</div>
-                            <h3 class="event-title">🎷 Concert Jazz Intimiste</h3>
-                            <div class="event-meta">
-                                <span><i class="fas fa-location-dot"></i> Le Sunset</span>
-                                <span><i class="fas fa-clock"></i> 20h30</span>
-                                <span><i class="fas fa-euro-sign"></i> 15€</span>
-                                <span class="match-score">94% match</span>
-                            </div>
-                        </div>
-                        
-                        <div class="event-card demo-event" role="listitem">
-                            <div class="event-category-tag">Théâtre</div>
-                            <h3 class="event-title">🎭 Théâtre d'Impro</h3>
-                            <div class="event-meta">
-                                <span><i class="fas fa-location-dot"></i> Café Théâtre</span>
-                                <span><i class="fas fa-clock"></i> 21h</span>
-                                <span><i class="fas fa-euro-sign"></i> 12€</span>
-                                <span class="match-score">89% match</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </section>
         
@@ -208,14 +162,34 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
                         </button>
                     </div>
                     
+                    <!-- City selector will be inserted here by JavaScript -->
+                    
                     <div class="quick-filters">
-                        <button type="button" class="filter-chip active" data-filter="all">Tout</button>
-                        <button type="button" class="filter-chip" data-filter="today">Aujourd'hui</button>
-                        <button type="button" class="filter-chip" data-filter="weekend">Ce week-end</button>
-                        <button type="button" class="filter-chip" data-filter="free">Gratuit</button>
-                        <button type="button" class="filter-chip" data-filter="nearby">À proximité</button>
+                        <button type="button" class="filter-chip active" data-filter="all">
+                            <i class="fas fa-th"></i> Tout
+                        </button>
+                        <button type="button" class="filter-chip" data-filter="today">
+                            <i class="fas fa-calendar-day"></i> Aujourd'hui
+                        </button>
+                        <button type="button" class="filter-chip" data-filter="weekend">
+                            <i class="fas fa-calendar-week"></i> Ce week-end
+                        </button>
+                        <button type="button" class="filter-chip" data-filter="free">
+                            <i class="fas fa-gift"></i> Gratuit
+                        </button>
+                        <button type="button" class="filter-chip" data-filter="nearby">
+                            <i class="fas fa-map-marked-alt"></i> À proximité (< 5km)
+                        </button>
                     </div>
                 </form>
+                
+                <!-- Events will be displayed here -->
+                <div class="demo-events" id="demo-events-container" style="margin-top: 3rem;">
+                    <div class="loading-placeholder" style="text-align: center; padding: 2rem; color: rgba(255, 255, 255, 0.6);">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                        <p>Chargement des événements...</p>
+                    </div>
+                </div>
             </div>
         </section>
         
@@ -228,7 +202,7 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
                 </div>
                 
                 <div class="categories-grid">
-                    <a href="/category.php?type=theater" class="category-card theater">
+                    <a href="category.php?cat=spectacles" class="category-card theater">
                         <div class="category-icon">🎭</div>
                         <div class="category-info">
                             <h3>Spectacles & Théâtre</h3>
@@ -237,7 +211,7 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
                         <div class="category-arrow">→</div>
                     </a>
                     
-                    <a href="/category.php?type=music" class="category-card music">
+                    <a href="category.php?cat=musique" class="category-card music">
                         <div class="category-icon">🎵</div>
                         <div class="category-info">
                             <h3>Musique & Concerts</h3>
@@ -246,7 +220,7 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
                         <div class="category-arrow">→</div>
                     </a>
                     
-                    <a href="/category.php?type=museum" class="category-card museum">
+                    <a href="category.php?cat=expositions" class="category-card museum">
                         <div class="category-icon">🖼️</div>
                         <div class="category-info">
                             <h3>Expositions & Musées</h3>
@@ -255,7 +229,7 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
                         <div class="category-arrow">→</div>
                     </a>
                     
-                    <a href="/category.php?type=heritage" class="category-card heritage">
+                    <a href="category.php?cat=patrimoine" class="category-card heritage">
                         <div class="category-icon">🏛️</div>
                         <div class="category-info">
                             <h3>Patrimoine & Visites</h3>
@@ -264,7 +238,7 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
                         <div class="category-arrow">→</div>
                     </a>
                     
-                    <a href="/category.php?type=cinema" class="category-card cinema">
+                    <a href="category.php?cat=cinema" class="category-card cinema">
                         <div class="category-icon">🎬</div>
                         <div class="category-info">
                             <h3>Cinéma & Projections</h3>
@@ -273,7 +247,7 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
                         <div class="category-arrow">→</div>
                     </a>
                     
-                    <a href="/category.php?type=workshop" class="category-card workshop">
+                    <a href="category.php?cat=ateliers" class="category-card workshop">
                         <div class="category-icon">🎨</div>
                         <div class="category-info">
                             <h3>Ateliers & Rencontres</h3>

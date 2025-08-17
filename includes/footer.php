@@ -20,32 +20,41 @@
             </div>
             
             <div class="footer-section">
-                <h4 class="footer-subtitle">Navigation</h4>
+                <h4 class="footer-subtitle">Découvrir</h4>
                 <ul class="footer-links">
-                    <li><a href="index.php">Accueil</a></li>
-                    <li><a href="discover.php">Découvrir</a></li>
-                    <li><a href="dashboard.php">Dashboard</a></li>
-                    <li><a href="register.php">S'inscrire</a></li>
+                    <li><a href="events.php">Tous les événements</a></li>
+                    <li><a href="venues.php">Lieux culturels</a></li>
+                    <li><a href="artists.php">Artistes</a></li>
+                    <li><a href="calendar.php">Calendrier</a></li>
+                </ul>
+                <h4 class="footer-subtitle" style="margin-top: 20px;">Villes</h4>
+                <ul class="footer-links">
+                    <li><a href="events.php?city=paris">Paris</a></li>
+                    <li><a href="events.php?city=lyon">Lyon</a></li>
+                    <li><a href="events.php?city=marseille">Marseille</a></li>
+                    <li><a href="events.php?city=toulouse">Toulouse</a></li>
+                    <li><a href="events.php?city=bordeaux">Bordeaux</a></li>
+                    <li><a href="events.php?city=lille">Lille</a></li>
                 </ul>
             </div>
             
             <div class="footer-section">
-                <h4 class="footer-subtitle">Catégories</h4>
+                <h4 class="footer-subtitle">Ressources</h4>
                 <ul class="footer-links">
-                    <li><a href="discover.php?category=exposition">Expositions</a></li>
-                    <li><a href="discover.php?category=concert">Concerts</a></li>
-                    <li><a href="discover.php?category=theatre">Théâtre</a></li>
-                    <li><a href="discover.php?category=cinema">Cinéma</a></li>
+                    <li><a href="about.php">À propos</a></li>
+                    <li><a href="help.php">Centre d'aide</a></li>
+                    <li><a href="blog.php">Blog</a></li>
+                    <li><a href="partners.php">Partenaires</a></li>
                 </ul>
             </div>
             
             <div class="footer-section">
-                <h4 class="footer-subtitle">Informations</h4>
+                <h4 class="footer-subtitle">Légal</h4>
                 <ul class="footer-links">
-                    <li><a href="#">À propos</a></li>
-                    <li><a href="#">Contact</a></li>
-                    <li><a href="#">Mentions légales</a></li>
-                    <li><a href="#">Confidentialité</a></li>
+                    <li><a href="privacy.php">Confidentialité</a></li>
+                    <li><a href="terms.php">Conditions d'utilisation</a></li>
+                    <li><a href="legal.php">Mentions légales</a></li>
+                    <li><a href="cookies.php">Cookies</a></li>
                 </ul>
             </div>
         </div>

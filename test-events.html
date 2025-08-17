@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Event Navigation</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .events-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .event-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .event-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .event-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .event-meta {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .event-meta span {
+            display: block;
+            margin: 5px 0;
+        }
+        .category-tag {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #667eea;
+            color: white;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+        .test-info {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .success-msg {
+            background: #48bb78;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎭 Test de Navigation des Événements</h1>
+        
+        <div class="test-info">
+            <strong>Instructions:</strong> Cliquez sur n'importe quel événement ci-dessous pour tester la navigation vers sa page de détails.
+            <br>Chaque événement génère une page unique basée sur son ID.
+        </div>
+        
+        <div id="success-msg" class="success-msg"></div>
+        
+        <div class="events-grid" id="events-grid">
+            <!-- Events will be added here -->
+        </div>
+    </div>
+    
+    <script>
+        // Test event data
+        const testEvents = [
+            {
+                id: 'event-68a1143a16265n',
+                title: 'Concert Jazz au Sunset',
+                category: 'Concert',
+                venue: 'Le Sunset-Sunside',
+                date: 'Ce soir à 21h',
+                price: '35€'
+            },
+            {
+                id: 'event-monet-expo-2024',
+                title: 'Exposition Monet: Les Nymphéas',
+                category: 'Exposition',
+                venue: 'Musée de l\'Orangerie',
+                date: 'Jusqu\'au 31 mars',
+                price: '12€'
+            },
+            {
+                id: 'event-theatre-moliere',
+                title: 'Le Malade Imaginaire',
+                category: 'Théâtre',
+                venue: 'Comédie-Française',
+                date: 'Demain 20h',
+                price: '45€'
+            },
+            {
+                id: 'event-electro-villette',
+                title: 'Festival Électro Summer',
+                category: 'Festival',
+                venue: 'Parc de la Villette',
+                date: 'Ce week-end',
+                price: 'Gratuit'
+            },
+            {
+                id: 'event-ballet-garnier',
+                title: 'Le Lac des Cygnes',
+                category: 'Danse',
+                venue: 'Opéra Garnier',
+                date: 'Samedi 20h',
+                price: '65€'
+            },
+            {
+                id: 'event-cinema-rex',
+                title: 'Rétrospective Nouvelle Vague',
+                category: 'Cinéma',
+                venue: 'Le Grand Rex',
+                date: 'Cette semaine',
+                price: '8€'
+            }
+        ];
+        
+        // Generate event cards
+        const container = document.getElementById('events-grid');
+        
+        testEvents.forEach(event => {
+            const card = document.createElement('div');
+            card.className = 'event-card';
+            card.innerHTML = `
+                <div class="category-tag">${event.category}</div>
+                <div class="event-title">${event.title}</div>
+                <div class="event-meta">
+                    <span>📍 ${event.venue}</span>
+                    <span>📅 ${event.date}</span>
+                    <span>💶 ${event.price}</span>
+                    <span style="margin-top: 10px; color: #667eea; font-weight: bold;">
+                        ID: ${event.id}
+                    </span>
+                </div>
+            `;
+            
+            card.onclick = () => {
+                // Store event data in sessionStorage
+                sessionStorage.setItem('event_' + event.id, JSON.stringify(event));
+                
+                // Show success message
+                const msg = document.getElementById('success-msg');
+                msg.textContent = `✅ Navigation vers: ${event.title}`;
+                msg.style.display = 'block';
+                
+                // Navigate to event details page
+                setTimeout(() => {
+                    window.location.href = `/event-details.php?id=${encodeURIComponent(event.id)}`;
+                }, 500);
+            };
+            
+            container.appendChild(card);
+        });
+        
+        // Also test with filters.js events
+        if (window.eventFilters && window.eventFilters.events) {
+            console.log('✅ Filters.js loaded, events available:', window.eventFilters.events.length);
+        } else {
+            console.log('⏳ Filters.js not yet loaded or no events');
+        }
+    </script>
+</body>
+</html>

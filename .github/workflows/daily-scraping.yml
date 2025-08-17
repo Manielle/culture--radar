@@ -1,0 +1,14 @@
+name: Daily Scraping
+
+on:
+  schedule:
+    - cron: '0 6 * * *'  # 6h00 UTC chaque jour
+  workflow_dispatch:  # Permet le déclenchement manuel
+
+jobs:
+  trigger-scraping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Railway Scraping
+        run: |
+          curl -X GET "https://votre-app.railway.app/api/trigger-scraping.php?secret=votre_cle_secrete_ici_234kj23h4"
