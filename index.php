@@ -11,14 +11,17 @@ session_start();
 // Load configuration
 require_once __DIR__ . '/config.php';
 
-// Initialize database connection
+// Initialize database connection (with error handling)
 try {
-    $dbConfig = Config::database();
-    $dsn = "mysql:host=" . $dbConfig['host'] . ";dbname=" . $dbConfig['name'] . ";charset=" . $dbConfig['charset'];
-    $pdo = new PDO($dsn, $dbConfig['user'], $dbConfig['pass']);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch(PDOException $e) {
-    // Database doesn't exist, we'll create it later
+    if (class_exists('Config')) {
+        $dbConfig = Config::database();
+        $dsn = "mysql:host=" . $dbConfig['host'] . ";dbname=" . $dbConfig['name'] . ";charset=" . $dbConfig['charset'];
+        $pdo = new PDO($dsn, $dbConfig['user'], $dbConfig['pass']);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    }
+} catch(Exception $e) {
+    // Database doesn't exist or connection failed, continue without it
+    error_log("Database connection failed: " . $e->getMessage());
 }
 
 // Check if user is logged in
@@ -42,7 +45,7 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
     <meta property="og:image" content="/assets/og-image.jpg">
     <meta property="og:url" content="https://culture-radar.fr/">
     
-    <?php include 'includes/favicon.php'; ?>
+    <?php if (file_exists('includes/favicon.php')) include 'includes/favicon.php'; ?>
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -69,7 +72,9 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
     <header class="header" role="banner">
         <nav class="nav" role="navigation" aria-label="Navigation principale">
             <a href="/" class="logo" aria-label="Culture Radar - Retour à l'accueil">
+                <?php if (file_exists('logo-culture-radar.png')): ?>
                 <img src="/logo-culture-radar.png" alt="Culture Radar Logo" class="logo-icon" style="height: 40px; width: auto; margin-right: 10px;">
+                <?php endif; ?>
                 Culture Radar
             </a>
             
@@ -419,49 +424,7 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
     </main>
     
     <!-- Footer -->
-    <footer id="footer" class="footer" role="contentinfo">
-        <div class="footer-content">
-            <div class="footer-section">
-                <h3>Culture Radar</h3>
-                <p>La révolution de la découverte culturelle. Votre boussole intelligente vers l'art, 
-                   la culture et l'émerveillement.</p>
-                <div class="social-links">
-                    <a href="#" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
-                    <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
-                    <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-                    <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
-                </div>
-            </div>
-            
-            <div class="footer-section">
-                <h3>Découvrir</h3>
-                <a href="/events.php">Tous les événements</a>
-                <a href="/venues.php">Lieux culturels</a>
-                <a href="/artists.php">Artistes</a>
-                <a href="/calendar.php">Calendrier</a>
-            </div>
-            
-            <div class="footer-section">
-                <h3>Ressources</h3>
-                <a href="/about.php">À propos</a>
-                <a href="/help.php">Centre d'aide</a>
-                <a href="/blog.php">Blog</a>
-                <a href="/partners.php">Partenaires</a>
-            </div>
-            
-            <div class="footer-section">
-                <h3>Légal</h3>
-                <a href="/privacy.php">Confidentialité</a>
-                <a href="/terms.php">Conditions d'utilisation</a>
-                <a href="/legal.php">Mentions légales</a>
-                <a href="/cookies.php">Cookies</a>
-            </div>
-        </div>
-        
-        <div class="footer-bottom">
-            <p>&copy; 2024 Culture Radar. Projet étudiant fictif - Aucune transaction réelle.</p>
-        </div>
-    </footer>
+    <?php if (file_exists('includes/footer.php')) include 'includes/footer.php'; ?>
     
     <!-- Cookie Banner -->
     <div id="cookie-banner" class="cookie-banner" role="dialog" aria-labelledby="cookie-title">
