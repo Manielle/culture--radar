@@ -1,7 +1,10 @@
 FROM php:8.2-apache
 
 # Install required PHP extensions
-RUN docker-php-ext-install pdo pdo_mysql
+RUN docker-php-ext-install pdo pdo_mysql mysqli
+
+# Enable Apache mod_rewrite
+RUN a2enmod rewrite
 
 # Copy all application source code
 COPY . /var/www/html/
@@ -26,8 +29,22 @@ RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html \
     && chmod -R 777 /var/www/html/cache
 
-# Expose port 80
-EXPOSE 80
+# Create start script to handle Railway's PORT variable
+RUN echo '#!/bin/bash\n\
+if [ -z "$PORT" ]; then\n\
+  PORT=80\n\
+fi\n\
+echo "Listen $PORT" > /etc/apache2/ports.conf\n\
+echo "<VirtualHost *:$PORT>" > /etc/apache2/sites-available/000-default.conf\n\
+echo "    DocumentRoot /var/www/html" >> /etc/apache2/sites-available/000-default.conf\n\
+echo "    <Directory /var/www/html>" >> /etc/apache2/sites-available/000-default.conf\n\
+echo "        Options Indexes FollowSymLinks" >> /etc/apache2/sites-available/000-default.conf\n\
+echo "        AllowOverride All" >> /etc/apache2/sites-available/000-default.conf\n\
+echo "        Require all granted" >> /etc/apache2/sites-available/000-default.conf\n\
+echo "    </Directory>" >> /etc/apache2/sites-available/000-default.conf\n\
+echo "</VirtualHost>" >> /etc/apache2/sites-available/000-default.conf\n\
+apache2-foreground' > /start.sh && \
+chmod +x /start.sh
 
-# Start Apache in foreground
-CMD ["apache2-foreground"]
+# Start Apache with PORT configuration
+CMD ["/start.sh"]
