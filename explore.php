@@ -4,15 +4,13 @@ require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/classes/Auth.php';
 
 $auth = new Auth();
-$isLoggedIn = false;
-$user = null;
 
-// Désactiver la vérification de connexion temporairement
-// if (!$auth->isLoggedIn()) {
-//     header('Location: login.php');
-//     exit();
-// }
-// $user = $auth->getCurrentUser();
+if (!$auth->isLoggedIn()) {
+    header('Location: login.php');
+    exit();
+}
+
+$user = $auth->getCurrentUser();
 ?>
 <!DOCTYPE html>
 <html lang="fr">
