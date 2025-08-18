@@ -1,134 +1,213 @@
 <?php
 /**
- * Configuration Railway pour Culture Radar
- * Détection automatique de l'environnement Railway et configuration MySQL
+ * Railway-specific configuration
+ * This file handles Railway's MySQL environment variables
  */
 
-// Détection de l'environnement Railway
-$isRailway = getenv('RAILWAY_ENVIRONMENT') !== false || 
-             getenv('RAILWAY_PUBLIC_DOMAIN') !== false ||
-             getenv('MYSQLHOST') !== false;
-
-if ($isRailway) {
-    // Configuration Railway MySQL
-    define('DB_HOST', getenv('MYSQLHOST'));
-    define('DB_NAME', getenv('MYSQLDATABASE'));
-    define('DB_USER', getenv('MYSQLUSER'));
-    define('DB_PASS', getenv('MYSQLPASSWORD'));
-    define('DB_PORT', getenv('MYSQLPORT'));
-    
-    // URL de l'application
-    $railwayDomain = getenv('RAILWAY_PUBLIC_DOMAIN');
-    define('APP_URL', $railwayDomain ? "https://{$railwayDomain}" : 'http://localhost');
-    define('APP_ENV', 'production');
-    define('APP_DEBUG', false);
-} else {
-    // Configuration locale (MAMP/XAMPP)
-    define('DB_HOST', 'localhost');
-    define('DB_NAME', 'culture_radar');
-    define('DB_USER', 'root');
-    define('DB_PASS', 'root');
-    define('DB_PORT', '8889'); // Port MAMP par défaut
-    
-    define('APP_URL', 'http://localhost:8888');
-    define('APP_ENV', 'development');
-    define('APP_DEBUG', true);
+// Configure session settings ONLY if session hasn't started yet
+if (session_status() === PHP_SESSION_NONE) {
+    ini_set('session.cookie_httponly', 1);
+    ini_set('session.cookie_secure', 1); // HTTPS on Railway
+    ini_set('session.use_strict_mode', 1);
 }
 
-// Configuration commune
-define('APP_NAME', 'Culture Radar');
-define('APP_VERSION', '1.0.0');
-
-// Configuration des clés API
-define('OPENAGENDA_API_KEY', getenv('OPENAGENDA_API_KEY') ?: '');
-define('PARIS_OPEN_DATA_KEY', getenv('PARIS_OPEN_DATA_KEY') ?: '');
-define('SERP_API_KEY', getenv('SERP_API_KEY') ?: 'b56aa6ec92f9f569f50f671e5133d46d5131c74c260086c37f5222bf489f2d4d');
-define('OPENWEATHER_API_KEY', getenv('OPENWEATHER_API_KEY') ?: '');
-
-// Configuration des sessions
-ini_set('session.cookie_httponly', 1);
-ini_set('session.cookie_secure', $isRailway ? 1 : 0);
-ini_set('session.use_strict_mode', 1);
-
-// Configuration du fuseau horaire
-date_default_timezone_set('Europe/Paris');
-
-// Configuration des erreurs
-if (APP_DEBUG) {
-    error_reporting(E_ALL);
-    ini_set('display_errors', 1);
-} else {
-    error_reporting(E_ERROR | E_WARNING | E_PARSE);
-    ini_set('display_errors', 0);
-}
-ini_set('log_errors', 1);
-ini_set('error_log', __DIR__ . '/logs/error.log');
-
-// Fonction de connexion PDO
-function getDatabaseConnection() {
-    try {
-        $dsn = sprintf(
-            'mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4',
-            DB_HOST,
-            DB_PORT,
-            DB_NAME
-        );
+class Config {
+    private static $config = [];
+    private static $loaded = false;
+    
+    /**
+     * Load configuration from environment
+     */
+    public static function load() {
+        if (self::$loaded) {
+            return;
+        }
         
-        $pdo = new PDO($dsn, DB_USER, DB_PASS);
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
+        // Railway provides MYSQL_URL which contains all connection info
+        if ($mysql_url = getenv('MYSQL_URL')) {
+            $parsed = parse_url($mysql_url);
+            
+            self::$config['DB_HOST'] = $parsed['host'] ?? 'localhost';
+            self::$config['DB_PORT'] = $parsed['port'] ?? 3306;
+            self::$config['DB_USER'] = $parsed['user'] ?? 'root';
+            self::$config['DB_PASS'] = $parsed['pass'] ?? '';
+            self::$config['DB_NAME'] = ltrim($parsed['path'] ?? '', '/') ?: 'railway';
+        }
+        // Fall back to individual MySQL variables
+        elseif (getenv('MYSQLHOST')) {
+            self::$config['DB_HOST'] = getenv('MYSQLHOST');
+            self::$config['DB_PORT'] = getenv('MYSQLPORT') ?: 3306;
+            self::$config['DB_USER'] = getenv('MYSQLUSER');
+            self::$config['DB_PASS'] = getenv('MYSQLPASSWORD');
+            self::$config['DB_NAME'] = getenv('MYSQLDATABASE');
+        }
+        // Fall back to defaults for local development
+        else {
+            self::$config['DB_HOST'] = 'localhost';
+            self::$config['DB_PORT'] = '3306';
+            self::$config['DB_USER'] = 'root';
+            self::$config['DB_PASS'] = '';
+            self::$config['DB_NAME'] = 'culture_radar';
+        }
         
-        // Configuration UTF8MB4
-        $pdo->exec("SET NAMES utf8mb4");
-        $pdo->exec("SET CHARACTER SET utf8mb4");
-        $pdo->exec("SET COLLATION_CONNECTION = 'utf8mb4_unicode_ci'");
+        // Set other defaults
+        self::setDefaults();
+        self::$loaded = true;
+    }
+    
+    /**
+     * Get configuration value
+     */
+    public static function get($key, $default = null) {
+        self::load();
         
-        return $pdo;
-    } catch (PDOException $e) {
-        if (APP_DEBUG) {
-            die("Erreur de connexion à la base de données : " . $e->getMessage());
-        } else {
-            error_log("Database connection failed: " . $e->getMessage());
-            die("Erreur de connexion à la base de données. Veuillez réessayer plus tard.");
+        // Check environment variable first
+        $envValue = getenv($key);
+        if ($envValue !== false) {
+            return self::parseValue($envValue);
+        }
+        
+        // Check config array
+        if (isset(self::$config[$key])) {
+            return self::parseValue(self::$config[$key]);
+        }
+        
+        return $default;
+    }
+    
+    /**
+     * Set configuration value
+     */
+    public static function set($key, $value) {
+        self::$config[$key] = $value;
+        $_ENV[$key] = $value;
+        putenv("$key=$value");
+    }
+    
+    /**
+     * Parse configuration value
+     */
+    private static function parseValue($value) {
+        if (strtolower($value) === 'true') return true;
+        if (strtolower($value) === 'false') return false;
+        if (strtolower($value) === 'null') return null;
+        if (is_numeric($value)) {
+            return strpos($value, '.') !== false ? (float)$value : (int)$value;
+        }
+        return $value;
+    }
+    
+    /**
+     * Set default configuration values
+     */
+    private static function setDefaults() {
+        $defaults = [
+            'APP_NAME' => 'Culture Radar',
+            'APP_ENV' => getenv('RAILWAY_ENVIRONMENT') ? 'production' : 'development',
+            'APP_DEBUG' => getenv('RAILWAY_ENVIRONMENT') ? 'false' : 'true',
+            'APP_URL' => getenv('RAILWAY_PUBLIC_DOMAIN') 
+                ? 'https://' . getenv('RAILWAY_PUBLIC_DOMAIN')
+                : 'http://localhost:8080',
+            
+            'CACHE_DRIVER' => 'file',
+            'CACHE_TTL' => '3600',
+            'UPLOAD_MAX_SIZE' => '10485760',
+            'ALLOWED_IMAGE_TYPES' => 'jpg,jpeg,png,webp',
+            'UPLOAD_PATH' => '/uploads',
+            'RATE_LIMIT_ENABLED' => 'true',
+            'RATE_LIMIT_REQUESTS' => '100',
+            'RATE_LIMIT_WINDOW' => '3600',
+            'AI_TRAINING_ENABLED' => 'true',
+            'AI_MIN_INTERACTIONS' => '10',
+            'ERROR_REPORTING' => getenv('RAILWAY_ENVIRONMENT') ? 'false' : 'true',
+            'LOG_LEVEL' => 'warning'
+        ];
+        
+        foreach ($defaults as $key => $value) {
+            if (!isset(self::$config[$key]) && getenv($key) === false) {
+                self::$config[$key] = $value;
+            }
         }
     }
-}
-
-// Fonction pour tester la connexion
-function testDatabaseConnection() {
-    try {
-        $pdo = getDatabaseConnection();
-        $stmt = $pdo->query("SELECT 1");
-        return $stmt !== false;
-    } catch (Exception $e) {
-        return false;
+    
+    /**
+     * Get database configuration
+     */
+    public static function database() {
+        self::load();
+        return [
+            'host' => self::$config['DB_HOST'],
+            'name' => self::$config['DB_NAME'],
+            'user' => self::$config['DB_USER'],
+            'pass' => self::$config['DB_PASS'],
+            'port' => self::$config['DB_PORT'],
+            'charset' => 'utf8mb4'
+        ];
+    }
+    
+    /**
+     * Get PDO DSN string
+     */
+    public static function getDSN() {
+        $db = self::database();
+        return "mysql:host={$db['host']};port={$db['port']};dbname={$db['name']};charset={$db['charset']}";
+    }
+    
+    /**
+     * Create and return a PDO instance
+     */
+    public static function getPDO() {
+        try {
+            $db = self::database();
+            $dsn = self::getDSN();
+            
+            $pdo = new PDO($dsn, $db['user'], $db['pass']);
+            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+            $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
+            
+            // Set UTF8MB4 charset
+            $pdo->exec("SET NAMES utf8mb4");
+            $pdo->exec("SET CHARACTER SET utf8mb4");
+            $pdo->exec("SET COLLATION_CONNECTION = 'utf8mb4_unicode_ci'");
+            
+            return $pdo;
+        } catch (PDOException $e) {
+            error_log("Database connection failed: " . $e->getMessage());
+            
+            // Show error in development mode
+            if (self::get('APP_DEBUG')) {
+                throw new Exception("Database connection failed: " . $e->getMessage());
+            }
+            
+            // Return null in production
+            return null;
+        }
+    }
+    
+    /**
+     * Check if app is in debug mode
+     */
+    public static function isDebug() {
+        return self::get('APP_DEBUG') === true;
+    }
+    
+    /**
+     * Check if app is in production
+     */
+    public static function isProduction() {
+        return self::get('APP_ENV') === 'production';
+    }
+    
+    /**
+     * Get all configuration values
+     */
+    public static function all() {
+        self::load();
+        return self::$config;
     }
 }
 
-// Créer les répertoires nécessaires
-$directories = [
-    __DIR__ . '/logs',
-    __DIR__ . '/uploads',
-    __DIR__ . '/cache'
-];
-
-foreach ($directories as $dir) {
-    if (!file_exists($dir)) {
-        @mkdir($dir, 0755, true);
-    }
-}
-
-// Afficher les informations de debug si nécessaire
-if (APP_DEBUG && isset($_GET['debug'])) {
-    echo "<pre>";
-    echo "=== Configuration Railway ===\n";
-    echo "Is Railway: " . ($isRailway ? 'Yes' : 'No') . "\n";
-    echo "DB_HOST: " . DB_HOST . "\n";
-    echo "DB_NAME: " . DB_NAME . "\n";
-    echo "DB_PORT: " . DB_PORT . "\n";
-    echo "APP_URL: " . APP_URL . "\n";
-    echo "Database Connection: " . (testDatabaseConnection() ? 'OK' : 'FAILED') . "\n";
-    echo "</pre>";
-}
+// Auto-load configuration
+Config::load();
 ?>

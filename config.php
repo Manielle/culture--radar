@@ -4,6 +4,12 @@
  * Handles environment variables and application configuration
  */
 
+// Use Railway-specific configuration if on Railway
+if (getenv('RAILWAY_ENVIRONMENT') || getenv('MYSQL_URL') || getenv('MYSQLHOST')) {
+    require_once __DIR__ . '/config-railway.php';
+    return;
+}
+
 // Configure session settings ONLY if session hasn't started yet
 if (session_status() === PHP_SESSION_NONE) {
     ini_set('session.cookie_httponly', 1);
