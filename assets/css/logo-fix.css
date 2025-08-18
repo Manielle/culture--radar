@@ -1,0 +1,77 @@
+/* Culture Radar - Logo Fix CSS */
+/* This file ensures all emoji logos are replaced with the actual Culture Radar logo */
+
+/* Hide emoji content and replace with logo for all icon containers */
+.location-pin-icon,
+.category-icon,
+.empty-icon,
+.compass-icon,
+.preference-icon,
+.feature-icon,
+.empty-state-icon {
+    /* Set size */
+    width: 48px;
+    height: 48px;
+    
+    /* Use Culture Radar logo as background */
+    background-image: url('/logo-culture-radar.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    
+    /* Hide any emoji text */
+    font-size: 0 !important;
+    color: transparent !important;
+    text-indent: -9999px;
+    overflow: hidden;
+    
+    /* Ensure it displays correctly */
+    display: inline-block;
+    vertical-align: middle;
+}
+
+/* For larger icons */
+.empty-icon,
+.empty-state-icon,
+.compass-icon {
+    width: 64px;
+    height: 64px;
+}
+
+/* For smaller icons in navigation */
+.location-pin-icon {
+    width: 32px;
+    height: 32px;
+}
+
+/* Ensure images inside these containers display correctly */
+.location-pin-icon img,
+.category-icon img,
+.empty-icon img,
+.compass-icon img,
+.preference-icon img,
+.feature-icon img,
+.empty-state-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* Override any ::before or ::after pseudo-elements with emojis */
+.location-pin-icon::before,
+.location-pin-icon::after,
+.category-icon::before,
+.category-icon::after,
+.empty-icon::before,
+.empty-icon::after,
+.compass-icon::before,
+.compass-icon::after,
+.preference-icon::before,
+.preference-icon::after,
+.feature-icon::before,
+.feature-icon::after,
+.empty-state-icon::before,
+.empty-state-icon::after {
+    content: '' !important;
+    display: none !important;
+}

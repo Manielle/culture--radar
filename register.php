@@ -714,19 +714,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             const strengthBar = document.querySelectorAll('.strength-segment');
             const strengthText = document.querySelector('.strength-text');
             
+            // Check if elements exist
+            if (!strengthBar || strengthBar.length === 0 || !strengthText) {
+                console.warn('Password strength elements not found');
+                return;
+            }
+            
             // Reset segments
             strengthBar.forEach(segment => {
                 segment.classList.remove('active', 'medium', 'weak');
             });
             
             // Update segments based on strength
-            for (let i = 0; i < strength; i++) {
-                if (strength <= 2) {
-                    strengthBar[i].classList.add('weak');
-                } else if (strength <= 3) {
-                    strengthBar[i].classList.add('medium');
-                } else {
-                    strengthBar[i].classList.add('active');
+            for (let i = 0; i < Math.min(strength, strengthBar.length); i++) {
+                if (strengthBar[i]) {
+                    if (strength <= 2) {
+                        strengthBar[i].classList.add('weak');
+                    } else if (strength <= 3) {
+                        strengthBar[i].classList.add('medium');
+                    } else {
+                        strengthBar[i].classList.add('active');
+                    }
                 }
             }
             
@@ -743,10 +751,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         // Password input event listener
-        document.getElementById('password').addEventListener('input', function(e) {
-            updatePasswordStrength(e.target.value);
-            checkPasswordMatch();
-        });
+        const passwordInput = document.getElementById('password');
+        if (passwordInput) {
+            passwordInput.addEventListener('input', function(e) {
+                updatePasswordStrength(e.target.value);
+                checkPasswordMatch();
+            });
+        }
         
         // Confirm password checker
         function checkPasswordMatch() {

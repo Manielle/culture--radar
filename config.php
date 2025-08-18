@@ -4,6 +4,12 @@
  * Handles environment variables and application configuration
  */
 
+// Use Railway-specific configuration if on Railway
+if (getenv('RAILWAY_ENVIRONMENT') || getenv('MYSQL_URL') || getenv('MYSQLHOST')) {
+    require_once __DIR__ . '/config-railway.php';
+    return;
+}
+
 // Configure session settings ONLY if session hasn't started yet
 if (session_status() === PHP_SESSION_NONE) {
     ini_set('session.cookie_httponly', 1);
@@ -164,6 +170,14 @@ class Config {
      */
     public static function getDSN() {
         $db = self::database();
+        
+        // Sur Railway, utiliser TCP/IP au lieu de socket Unix
+        if (getenv('MYSQLHOST') || getenv('RAILWAY_ENVIRONMENT')) {
+            // Forcer l'utilisation de 127.0.0.1 au lieu de localhost pour éviter les sockets Unix
+            $host = $db['host'] === 'localhost' ? '127.0.0.1' : $db['host'];
+            return "mysql:host={$host};port={$db['port']};dbname={$db['name']};charset={$db['charset']}";
+        }
+        
         return "mysql:host={$db['host']};port={$db['port']};dbname={$db['name']};charset={$db['charset']}";
     }
     
@@ -187,12 +201,13 @@ class Config {
             
             return $pdo;
         } catch (PDOException $e) {
+            error_log("Database connection failed: " . $e->getMessage());
             if (self::isDebug()) {
-                echo "Database connection error: " . $e->getMessage();
+                // Ne pas afficher directement l'erreur pour éviter les problèmes de headers
                 throw $e;
             } else {
-                error_log("Database connection failed: " . $e->getMessage());
-                die("Database connection failed. Please check your configuration.");
+                // Retourner null au lieu de die() pour permettre une gestion d'erreur gracieuse
+                return null;
             }
         }
     }

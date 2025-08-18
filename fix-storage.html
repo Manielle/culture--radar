@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fix Storage - Culture Radar</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #5a67d8;
+        }
+        .success {
+            color: green;
+            margin-top: 10px;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+        pre {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Fix localStorage Issues</h1>
+        <p>Cette page permet de corriger les problèmes de localStorage.</p>
+        
+        <h2>Contenu actuel du localStorage :</h2>
+        <pre id="current-storage"></pre>
+        
+        <h2>Actions :</h2>
+        <button onclick="showStorage()">Afficher le localStorage</button>
+        <button onclick="fixCookieConsent()">Corriger cookieConsent</button>
+        <button onclick="clearBadData()">Nettoyer les données corrompues</button>
+        <button onclick="clearAll()">Tout effacer</button>
+        
+        <div id="message"></div>
+    </div>
+
+    <script>
+        function showStorage() {
+            const storage = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                const value = localStorage.getItem(key);
+                storage[key] = value;
+            }
+            document.getElementById('current-storage').textContent = JSON.stringify(storage, null, 2);
+            showMessage('localStorage affiché', 'success');
+        }
+        
+        function fixCookieConsent() {
+            try {
+                // Supprimer l'ancienne valeur corrompue
+                localStorage.removeItem('cookieConsent');
+                
+                // Définir la nouvelle valeur correctement
+                localStorage.setItem('cookieConsent', JSON.stringify({
+                    status: 'accepted',
+                    date: new Date().toISOString(),
+                    essential: true,
+                    analytics: true,
+                    marketing: false,
+                    social: false
+                }));
+                
+                showMessage('cookieConsent corrigé avec succès!', 'success');
+                showStorage();
+            } catch (error) {
+                showMessage('Erreur: ' + error.message, 'error');
+            }
+        }
+        
+        function clearBadData() {
+            const keysToCheck = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                keysToCheck.push(localStorage.key(i));
+            }
+            
+            let cleaned = 0;
+            keysToCheck.forEach(key => {
+                const value = localStorage.getItem(key);
+                try {
+                    // Essayer de parser en JSON
+                    JSON.parse(value);
+                } catch {
+                    // Si ce n'est pas du JSON valide et que ça devrait l'être
+                    if (key === 'cookieConsent' || key.includes('preferences') || key.includes('settings')) {
+                        localStorage.removeItem(key);
+                        cleaned++;
+                    }
+                }
+            });
+            
+            showMessage(`${cleaned} entrées corrompues supprimées`, 'success');
+            showStorage();
+        }
+        
+        function clearAll() {
+            if (confirm('Êtes-vous sûr de vouloir tout effacer ?')) {
+                localStorage.clear();
+                showMessage('localStorage complètement effacé', 'success');
+                showStorage();
+            }
+        }
+        
+        function showMessage(msg, type) {
+            const div = document.getElementById('message');
+            div.className = type;
+            div.textContent = msg;
+            setTimeout(() => {
+                div.textContent = '';
+            }, 3000);
+        }
+        
+        // Afficher le storage au chargement
+        window.onload = showStorage;
+    </script>
+</body>
+</html>

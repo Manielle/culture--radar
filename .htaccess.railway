@@ -1,0 +1,11 @@
+# Minimal .htaccess for Railway
+RewriteEngine On
+
+# Basic error handling
+ErrorDocument 404 /404.php
+ErrorDocument 500 /500.php
+
+# Allow access to all files
+Options +FollowSymLinks
+AllowOverride All
+Require all granted

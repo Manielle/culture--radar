@@ -106,6 +106,7 @@ if ($userProfile && $userProfile['notification_settings']) {
     
     <!-- Styles -->
     <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/logo-fix.css">
     
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -644,7 +645,7 @@ if ($userProfile && $userProfile['notification_settings']) {
                             </div>
                         <?php else: ?>
                             <div class="empty-state">
-                                <div class="empty-icon">🎭</div>
+                                <div class="empty-icon"><img src="/logo-culture-radar.png" alt="Culture Radar" style="width: 64px; height: 64px;"></div>
                                 <h3>Aucune recommandation pour le moment</h3>
                                 <p>Nous préparons des suggestions personnalisées pour vous.</p>
                                 <a href="/discover.php" class="btn-primary" style="margin-top: 1rem;">
