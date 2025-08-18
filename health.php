@@ -1,78 +1,61 @@
 <?php
-/**
- * Health check endpoint pour Railway
- * Vérifie que l'application et la base de données sont opérationnelles
- */
-
+// Simple health check endpoint for Railway
 header('Content-Type: application/json');
 
-require_once __DIR__ . '/config-railway.php';
-
-$health = [
+$response = [
     'status' => 'healthy',
-    'timestamp' => date('c'),
-    'checks' => []
+    'timestamp' => date('Y-m-d H:i:s'),
+    'php_version' => PHP_VERSION,
+    'server' => $_SERVER['SERVER_SOFTWARE'] ?? 'Unknown',
+    'port' => $_SERVER['SERVER_PORT'] ?? 'Unknown'
 ];
 
-// Vérification de la connexion à la base de données
-try {
-    $pdo = getDatabaseConnection();
-    $stmt = $pdo->query("SELECT 1");
-    $health['checks']['database'] = [
-        'status' => 'healthy',
-        'message' => 'Database connection successful'
-    ];
-} catch (Exception $e) {
-    $health['status'] = 'unhealthy';
-    $health['checks']['database'] = [
-        'status' => 'unhealthy',
-        'message' => 'Database connection failed',
-        'error' => APP_DEBUG ? $e->getMessage() : 'Connection error'
-    ];
-}
-
-// Vérification des répertoires essentiels
-$requiredDirs = ['logs', 'uploads', 'cache'];
-foreach ($requiredDirs as $dir) {
-    $path = __DIR__ . '/' . $dir;
-    if (is_dir($path) && is_writable($path)) {
-        $health['checks'][$dir . '_directory'] = [
-            'status' => 'healthy',
-            'message' => "Directory {$dir} is accessible"
-        ];
-    } else {
-        $health['status'] = 'unhealthy';
-        $health['checks'][$dir . '_directory'] = [
-            'status' => 'unhealthy',
-            'message' => "Directory {$dir} is not accessible or writable"
-        ];
+// Check database connection if variables are set
+$db_status = 'not_configured';
+if (getenv('MYSQL_URL') || getenv('MYSQLHOST')) {
+    try {
+        // Try Railway's MYSQL_URL first
+        if ($mysql_url = getenv('MYSQL_URL')) {
+            $parsed = parse_url($mysql_url);
+            $host = $parsed['host'] ?? '';
+            $port = $parsed['port'] ?? 3306;
+            $user = $parsed['user'] ?? '';
+            $pass = $parsed['pass'] ?? '';
+            $dbname = ltrim($parsed['path'] ?? '', '/');
+            
+            $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
+            $pdo = new PDO($dsn, $user, $pass);
+        } 
+        // Fall back to individual variables
+        else {
+            $host = getenv('MYSQLHOST');
+            $port = getenv('MYSQLPORT') ?: 3306;
+            $user = getenv('MYSQLUSER');
+            $pass = getenv('MYSQLPASSWORD');
+            $dbname = getenv('MYSQLDATABASE');
+            
+            $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
+            $pdo = new PDO($dsn, $user, $pass);
+        }
+        
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $db_status = 'connected';
+    } catch (Exception $e) {
+        $db_status = 'error: ' . $e->getMessage();
     }
+} else {
+    // List what MySQL variables are available
+    $mysql_vars = [];
+    foreach ($_ENV as $key => $value) {
+        if (strpos($key, 'MYSQL') !== false || strpos($key, 'DATABASE') !== false) {
+            $mysql_vars[$key] = substr($value, 0, 10) . '...'; // Show only first 10 chars for security
+        }
+    }
+    $response['available_db_vars'] = $mysql_vars;
 }
 
-// Vérification de la mémoire disponible
-$memoryLimit = ini_get('memory_limit');
-$health['checks']['memory'] = [
-    'status' => 'healthy',
-    'message' => "Memory limit: {$memoryLimit}",
-    'usage' => round(memory_get_usage(true) / 1024 / 1024, 2) . ' MB'
-];
+$response['database'] = $db_status;
 
-// Vérification de PHP
-$health['checks']['php'] = [
-    'status' => 'healthy',
-    'version' => PHP_VERSION,
-    'extensions' => [
-        'pdo' => extension_loaded('pdo'),
-        'pdo_mysql' => extension_loaded('pdo_mysql'),
-        'json' => extension_loaded('json'),
-        'curl' => extension_loaded('curl'),
-        'mbstring' => extension_loaded('mbstring')
-    ]
-];
-
-// Définir le code HTTP approprié
-http_response_code($health['status'] === 'healthy' ? 200 : 503);
-
-// Retourner la réponse JSON
-echo json_encode($health, JSON_PRETTY_PRINT);
+// Output response
+echo json_encode($response, JSON_PRETTY_PRINT);
 ?>
