@@ -29,7 +29,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         try {
             // Utiliser la fonction globale au lieu de Config::getPDO()
-            $pdo = function_exists('getDatabaseConnection') ? getDatabaseConnection() : Config::getPDO();
+            $pdo = null;
+            if (function_exists('getDatabaseConnection')) {
+                $pdo = getDatabaseConnection();
+            } else if (class_exists('Config')) {
+                $pdo = Config::getPDO();
+            }
+            
+            // Si pas de connexion DB, utiliser le mode démo
+            if (!$pdo) {
+                throw new Exception("Database connection not available");
+            }
             
             // Vérifier les identifiants
             $stmt = $pdo->prepare("SELECT id, name, email, password FROM users WHERE email = ?");

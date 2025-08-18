@@ -167,7 +167,13 @@ function initializeCookieBanner() {
  * Accept all cookies
  */
 function acceptAllCookies() {
-    localStorage.setItem('cookieConsent', 'accepted');
+    // Store as JSON object instead of plain string
+    const consent = {
+        status: 'accepted',
+        date: new Date().toISOString(),
+        all: true
+    };
+    localStorage.setItem('cookieConsent', JSON.stringify(consent));
     hideCookieBanner();
     
     // Initialize analytics or other tracking
@@ -514,7 +520,15 @@ const Storage = {
     get(key, defaultValue = null) {
         try {
             const item = localStorage.getItem(key);
-            return item ? JSON.parse(item) : defaultValue;
+            if (!item) return defaultValue;
+            
+            // Try to parse as JSON, if it fails return the raw value
+            try {
+                return JSON.parse(item);
+            } catch {
+                // If it's not valid JSON, return as string
+                return item;
+            }
         } catch (error) {
             console.error('Storage error:', error);
             return defaultValue;
@@ -549,7 +563,8 @@ function measurePerformance() {
             console.log(`Page load time: ${loadTime}ms`);
             
             // Send to analytics if needed
-            if (Storage.get('cookieConsent') === 'accepted') {
+            const consent = Storage.get('cookieConsent');
+            if (consent && (consent === 'accepted' || consent.status === 'accepted')) {
                 // Future: Send performance data to analytics
             }
         });

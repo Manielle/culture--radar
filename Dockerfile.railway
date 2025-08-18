@@ -34,6 +34,9 @@ RUN echo '<Directory /var/www/html/>' > /etc/apache2/sites-available/000-default
 # Copier les fichiers de l'application
 COPY . /var/www/html/
 
+# S'assurer que le logo est bien copié
+COPY "culture-radar - Copie/logo culture radar.PNG" /var/www/html/logo-culture-radar.png 2>/dev/null || true
+
 # Définir ServerName pour supprimer l'avertissement
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 

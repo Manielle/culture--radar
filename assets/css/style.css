@@ -198,7 +198,7 @@ body {
     width: 32px;
     height: 32px;
     margin-right: 0.75rem;
-    background-image: url('/favicon-32x32.png');
+    background-image: url('/logo-culture-radar.png');
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
@@ -685,7 +685,7 @@ section {
     width: 48px;
     height: 48px;
     flex-shrink: 0;
-    background-image: url('/favicon-32x32.png');
+    background-image: url('/logo-culture-radar.png');
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;

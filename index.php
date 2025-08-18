@@ -431,7 +431,7 @@ if (empty($realEvents)) {
                 
                 <div class="categories-grid">
                     <a href="explore.php?category=theater" class="category-card theater">
-                        <div class="category-icon"><img src="/favicon-32x32.png" alt="Culture Radar" style="width: 100%; height: 100%; object-fit: contain;"></div>
+                        <div class="category-icon"><img src="/logo-culture-radar.png" alt="Culture Radar" style="width: 100%; height: 100%; object-fit: contain;"></div>
                         <div class="category-info">
                             <h3>Spectacles & Théâtre</h3>
                             <p>Pièces, comédies musicales, one-man-shows</p>
