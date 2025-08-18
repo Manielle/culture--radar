@@ -4,26 +4,156 @@ header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: DENY');
 header('X-XSS-Protection: 1; mode=block');
 header('Referrer-Policy: no-referrer');
-header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
 
 session_start();
 
 // Load configuration
 require_once __DIR__ . '/config.php';
 
+// Try to load OpenAgenda service if it exists
+$hasOpenAgenda = false;
+if (file_exists(__DIR__ . '/services/OpenAgendaService.php')) {
+    require_once __DIR__ . '/services/OpenAgendaService.php';
+    $hasOpenAgenda = true;
+}
+
 // Initialize database connection
 try {
     $dbConfig = Config::database();
-    $dsn = "mysql:host=" . $dbConfig['host'] . ";dbname=" . $dbConfig['name'] . ";charset=" . $dbConfig['charset'];
+    $dsn = "mysql:host=" . $dbConfig['host'] . ";port=" . $dbConfig['port'] . ";dbname=" . $dbConfig['name'] . ";charset=" . $dbConfig['charset'];
     $pdo = new PDO($dsn, $dbConfig['user'], $dbConfig['pass']);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch(PDOException $e) {
     // Database doesn't exist, we'll create it later
+    $pdo = null;
 }
 
 // Check if user is logged in
 $isLoggedIn = isset($_SESSION['user_id']);
-$userName = $isLoggedIn ? $_SESSION['user_name'] : '';
+$userName = $isLoggedIn ? ($_SESSION['user_name'] ?? 'Utilisateur') : '';
+
+// Fetch real events from different cities
+$realEvents = [];
+$cities = ['Paris', 'Lyon', 'Bordeaux', 'Toulouse'];
+
+if ($hasOpenAgenda) {
+    try {
+        $openAgendaService = new OpenAgendaService();
+        
+        foreach ($cities as $city) {
+            $cityEvents = $openAgendaService->getEventsByLocation([
+                'city' => $city,
+                'additional' => ['size' => 1] // Get 1 event per city
+            ]);
+            
+            if (!empty($cityEvents)) {
+                $event = $cityEvents[0];
+                $event['display_city'] = $city; // Add city for display
+                $realEvents[] = $event;
+            }
+        }
+        
+        // If we don't have 4 events, fill with more from Paris
+        while (count($realEvents) < 4) {
+            $parisEvents = $openAgendaService->getEventsByLocation([
+                'city' => 'Paris',
+                'additional' => ['size' => 4]
+            ]);
+            
+            foreach ($parisEvents as $event) {
+                if (count($realEvents) >= 4) break;
+                
+                // Check if we already have this event
+                $eventExists = false;
+                foreach ($realEvents as $existingEvent) {
+                    if ($existingEvent['id'] === $event['id']) {
+                        $eventExists = true;
+                        break;
+                    }
+                }
+                
+                if (!$eventExists) {
+                    $event['display_city'] = 'Paris';
+                    $realEvents[] = $event;
+                }
+            }
+            break; // Prevent infinite loop
+        }
+        
+    } catch (Exception $e) {
+        error_log("Error fetching events for landing page: " . $e->getMessage());
+        // Fallback to demo events will be used
+    }
+}
+
+// Demo events as fallback
+$demoEvents = [
+    [
+        'id' => 'demo-1',
+        'title' => 'Concert de Jazz au Sunset',
+        'description' => 'Une soirée jazz exceptionnelle avec des artistes internationaux',
+        'date_start' => date('Y-m-d'),
+        'time' => '21:00',
+        'venue_name' => 'Le Sunset-Sunside',
+        'address' => '60 Rue des Lombards',
+        'city' => 'Paris',
+        'display_city' => 'Paris',
+        'is_free' => false,
+        'price' => 25,
+        'category' => 'concert',
+        'image' => 'https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?w=400'
+    ],
+    [
+        'id' => 'demo-2',
+        'title' => 'Exposition Monet',
+        'description' => 'Les Nymphéas de Claude Monet',
+        'date_start' => date('Y-m-d', strtotime('+1 day')),
+        'time' => '10:00 - 18:00',
+        'venue_name' => 'Musée de l\'Orangerie',
+        'address' => 'Jardin des Tuileries',
+        'city' => 'Paris',
+        'display_city' => 'Paris',
+        'is_free' => false,
+        'price' => 12,
+        'category' => 'exposition',
+        'image' => 'https://images.unsplash.com/photo-1554907984-15263bfd63bd?w=400'
+    ],
+    [
+        'id' => 'demo-3',
+        'title' => 'Théâtre: Le Malade Imaginaire',
+        'description' => 'La célèbre pièce de Molière',
+        'date_start' => date('Y-m-d', strtotime('+2 days')),
+        'time' => '20:00',
+        'venue_name' => 'Comédie-Française',
+        'address' => '1 Place Colette',
+        'city' => 'Paris',
+        'display_city' => 'Paris',
+        'is_free' => false,
+        'price' => 35,
+        'category' => 'théâtre',
+        'image' => 'https://images.unsplash.com/photo-1503095396549-807759245b35?w=400'
+    ],
+    [
+        'id' => 'demo-4',
+        'title' => 'Festival de Street Art',
+        'description' => 'Découvrez les artistes urbains du moment',
+        'date_start' => date('Y-m-d', strtotime('+3 days')),
+        'time' => 'Toute la journée',
+        'venue_name' => 'Belleville',
+        'address' => 'Quartier Belleville',
+        'city' => 'Paris',
+        'display_city' => 'Paris',
+        'is_free' => true,
+        'price' => 0,
+        'category' => 'festival',
+        'image' => 'https://images.unsplash.com/photo-1499781350541-7783f6c6a0c8?w=400'
+    ]
+];
+
+// Use demo events if no real events
+if (empty($realEvents)) {
+    $realEvents = $demoEvents;
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -42,7 +172,12 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
     <meta property="og:image" content="/assets/og-image.jpg">
     <meta property="og:url" content="https://culture-radar.fr/">
     
-    <?php include 'includes/favicon.php'; ?>
+    <?php if (file_exists(__DIR__ . '/includes/favicon.php')): ?>
+        <?php include 'includes/favicon.php'; ?>
+    <?php else: ?>
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <?php endif; ?>
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -151,44 +286,53 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
                     <div class="demo-header">
                         <h2 id="demo-title" class="sr-only">Aperçu en temps réel</h2>
                         <span class="location-tag">
-                            <i class="fas fa-map-marker-alt"></i> Paris 11e • Maintenant
+                            <i class="fas fa-map-marker-alt"></i> 
+                            <?php if (!empty($realEvents) && $hasOpenAgenda): ?>
+                                Événements en temps réel • <?php echo count(array_unique(array_column($realEvents, 'display_city'))); ?> villes
+                            <?php else: ?>
+                                Paris • Événements de démonstration
+                            <?php endif; ?>
                         </span>
                         <span class="time-tag">Personnalisé pour vous</span>
                     </div>
                     
                     <div class="demo-events" role="list">
-                        <div class="event-card demo-event" role="listitem">
-                            <div class="event-category-tag">Exposition</div>
-                            <h3 class="event-title">✨ Expo Photo "Paris Nocturne"</h3>
-                            <div class="event-meta">
-                                <span><i class="fas fa-location-dot"></i> Galerie Temps d'Art</span>
-                                <span><i class="fas fa-euro-sign"></i> Gratuit</span>
-                                <span><i class="fas fa-walking"></i> 5 min</span>
-                                <span class="match-score">97% match</span>
+                        <?php foreach (array_slice($realEvents, 0, 4) as $index => $event): ?>
+                            <?php 
+                            $categoryIcons = [
+                                'musique' => '🎵',
+                                'concert' => '🎷',
+                                'théâtre' => '🎭',
+                                'theater' => '🎭',
+                                'exposition' => '🎨',
+                                'art' => '🎨',
+                                'danse' => '💃',
+                                'cinéma' => '🎬',
+                                'festival' => '🎪',
+                                'conférence' => '🎤'
+                            ];
+                            
+                            $category = $event['category'] ?? 'culture';
+                            $icon = $categoryIcons[strtolower($category)] ?? '🎯';
+                            $priceText = isset($event['is_free']) && $event['is_free'] ? 'Gratuit' : 
+                                        (isset($event['price']) && $event['price'] ? $event['price'] . '€' : 'Prix libre');
+                            $venue = $event['venue_name'] ?? ($event['venue'] ?? 'Lieu culturel');
+                            $city = $event['display_city'] ?? ($event['city'] ?? 'Paris');
+                            ?>
+                            <div class="event-card demo-event" role="listitem">
+                                <div class="event-category-tag"><?php echo ucfirst($category); ?></div>
+                                <h3 class="event-title">
+                                    <?php echo $icon . ' ' . htmlspecialchars(substr($event['title'], 0, 40)) . (strlen($event['title']) > 40 ? '...' : ''); ?>
+                                </h3>
+                                <div class="event-meta">
+                                    <span><i class="fas fa-location-dot"></i> <?php echo htmlspecialchars($venue . ', ' . $city); ?></span>
+                                    <span><i class="fas fa-euro-sign"></i> <?php echo $priceText; ?></span>
+                                    <?php if (!empty($event['date_start'])): ?>
+                                        <span><i class="fas fa-calendar"></i> <?php echo date('d/m', strtotime($event['date_start'])); ?></span>
+                                    <?php endif; ?>
+                                </div>
                             </div>
-                        </div>
-                        
-                        <div class="event-card demo-event" role="listitem">
-                            <div class="event-category-tag">Concert</div>
-                            <h3 class="event-title">🎷 Concert Jazz Intimiste</h3>
-                            <div class="event-meta">
-                                <span><i class="fas fa-location-dot"></i> Le Sunset</span>
-                                <span><i class="fas fa-clock"></i> 20h30</span>
-                                <span><i class="fas fa-euro-sign"></i> 15€</span>
-                                <span class="match-score">94% match</span>
-                            </div>
-                        </div>
-                        
-                        <div class="event-card demo-event" role="listitem">
-                            <div class="event-category-tag">Théâtre</div>
-                            <h3 class="event-title">🎭 Théâtre d'Impro</h3>
-                            <div class="event-meta">
-                                <span><i class="fas fa-location-dot"></i> Café Théâtre</span>
-                                <span><i class="fas fa-clock"></i> 21h</span>
-                                <span><i class="fas fa-euro-sign"></i> 12€</span>
-                                <span class="match-score">89% match</span>
-                            </div>
-                        </div>
+                        <?php endforeach; ?>
                     </div>
                 </div>
             </div>
@@ -228,7 +372,7 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
                 </div>
                 
                 <div class="categories-grid">
-                    <a href="/category.php?type=theater" class="category-card theater">
+                    <a href="explore.php?category=theater" class="category-card theater">
                         <div class="category-icon">🎭</div>
                         <div class="category-info">
                             <h3>Spectacles & Théâtre</h3>
@@ -237,7 +381,7 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
                         <div class="category-arrow">→</div>
                     </a>
                     
-                    <a href="/category.php?type=music" class="category-card music">
+                    <a href="explore.php?category=music" class="category-card music">
                         <div class="category-icon">🎵</div>
                         <div class="category-info">
                             <h3>Musique & Concerts</h3>
@@ -246,7 +390,7 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
                         <div class="category-arrow">→</div>
                     </a>
                     
-                    <a href="/category.php?type=museum" class="category-card museum">
+                    <a href="explore.php?category=museum" class="category-card museum">
                         <div class="category-icon">🖼️</div>
                         <div class="category-info">
                             <h3>Expositions & Musées</h3>
@@ -255,7 +399,7 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
                         <div class="category-arrow">→</div>
                     </a>
                     
-                    <a href="/category.php?type=heritage" class="category-card heritage">
+                    <a href="explore.php?category=heritage" class="category-card heritage">
                         <div class="category-icon">🏛️</div>
                         <div class="category-info">
                             <h3>Patrimoine & Visites</h3>
@@ -264,7 +408,7 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
                         <div class="category-arrow">→</div>
                     </a>
                     
-                    <a href="/category.php?type=cinema" class="category-card cinema">
+                    <a href="explore.php?category=cinema" class="category-card cinema">
                         <div class="category-icon">🎬</div>
                         <div class="category-info">
                             <h3>Cinéma & Projections</h3>
@@ -273,7 +417,7 @@ $userName = $isLoggedIn ? $_SESSION['user_name'] : '';
                         <div class="category-arrow">→</div>
                     </a>
                     
-                    <a href="/category.php?type=workshop" class="category-card workshop">
+                    <a href="explore.php?category=workshop" class="category-card workshop">
                         <div class="category-icon">🎨</div>
                         <div class="category-info">
                             <h3>Ateliers & Rencontres</h3>
