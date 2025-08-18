@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Logo Transparency Test</title>
+    <style>
+        body {
+            padding: 50px;
+            font-family: Arial, sans-serif;
+        }
+        .test-container {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+        .test-box {
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .bg-dark {
+            background: #333;
+            color: white;
+        }
+        .bg-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .bg-pattern {
+            background-image: repeating-linear-gradient(45deg, #f0f0f0, #f0f0f0 10px, #e0e0e0 10px, #e0e0e0 20px);
+        }
+        img {
+            width: 100px;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Logo Transparency Test</h1>
+    <p>If the background is transparent, you should see different backgrounds behind the logo:</p>
+    
+    <div class="test-container">
+        <div class="test-box bg-dark">
+            <img src="android-chrome-192x192.png" alt="Logo on dark">
+            <p>Dark Background</p>
+        </div>
+        
+        <div class="test-box bg-gradient">
+            <img src="android-chrome-192x192.png" alt="Logo on gradient">
+            <p>Gradient Background</p>
+        </div>
+        
+        <div class="test-box bg-pattern">
+            <img src="android-chrome-192x192.png" alt="Logo on pattern">
+            <p>Pattern Background</p>
+        </div>
+    </div>
+    
+    <h2>All Logo Sizes:</h2>
+    <div class="test-container">
+        <div class="test-box bg-dark">
+            <img src="android-chrome-512x512.png" alt="512x512" style="width: 50px;">
+            <p>512x512</p>
+        </div>
+        <div class="test-box bg-dark">
+            <img src="apple-touch-icon.png" alt="Apple Touch" style="width: 50px;">
+            <p>Apple Touch</p>
+        </div>
+        <div class="test-box bg-dark">
+            <img src="favicon-32x32.png" alt="32x32" style="width: 32px;">
+            <p>32x32</p>
+        </div>
+        <div class="test-box bg-dark">
+            <img src="favicon-16x16.png" alt="16x16" style="width: 16px;">
+            <p>16x16</p>
+        </div>
+    </div>
+</body>
+</html>

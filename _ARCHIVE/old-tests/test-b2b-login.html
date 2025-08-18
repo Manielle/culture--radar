@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test B2B Login - Culture Radar</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .info-box {
+            background: #f0f0f0;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .test-accounts {
+            background: #e8f4f8;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .test-accounts h3 {
+            color: #333;
+            margin-top: 0;
+        }
+        .account {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        .account strong {
+            color: #667eea;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            margin: 10px 5px;
+            transition: transform 0.3s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .sql-instructions {
+            background: #fff9e6;
+            border: 1px solid #ffc107;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .sql-instructions h3 {
+            color: #856404;
+            margin-top: 0;
+        }
+        .code {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+        .steps {
+            counter-reset: step;
+            margin: 20px 0;
+        }
+        .step {
+            counter-increment: step;
+            margin: 15px 0;
+            padding-left: 40px;
+            position: relative;
+        }
+        .step::before {
+            content: counter(step);
+            position: absolute;
+            left: 0;
+            top: 0;
+            background: #667eea;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏢 Culture Radar B2B System</h1>
+        <p class="subtitle">Instructions pour configurer et tester le système B2B</p>
+        
+        <div class="sql-instructions">
+            <h3>⚠️ Configuration de la base de données requise</h3>
+            <p>Avant de pouvoir utiliser le système B2B, vous devez exécuter les scripts SQL suivants dans phpMyAdmin :</p>
+            
+            <div class="steps">
+                <div class="step">
+                    <strong>Ouvrez phpMyAdmin</strong>
+                    <div class="code">http://localhost:8889/phpMyAdmin</div>
+                </div>
+                
+                <div class="step">
+                    <strong>Sélectionnez la base de données 'culture_radar'</strong>
+                </div>
+                
+                <div class="step">
+                    <strong>Cliquez sur l'onglet 'SQL'</strong>
+                </div>
+                
+                <div class="step">
+                    <strong>Copiez et exécutez le contenu du fichier :</strong>
+                    <div class="code">fix-organizers-table.sql</div>
+                    <p>Ce script va créer la table des organisateurs avec la bonne structure et ajouter 3 comptes de test.</p>
+                </div>
+                
+                <div class="step">
+                    <strong>Ensuite, exécutez le contenu du fichier :</strong>
+                    <div class="code">add-organizer-to-events.sql</div>
+                    <p>Ce script va ajouter le support des organisateurs aux événements existants.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="test-accounts">
+            <h3>📧 Comptes de test disponibles après l'exécution des scripts SQL</h3>
+            
+            <div class="account">
+                <strong>Enterprise (Premium)</strong><br>
+                Email: <code>contact@livenation.fr</code><br>
+                Mot de passe: <code>organizer123</code><br>
+                <em>Toutes les fonctionnalités premium activées</em>
+            </div>
+            
+            <div class="account">
+                <strong>Association (Basic)</strong><br>
+                Email: <code>marie@jazzparis.org</code><br>
+                Mot de passe: <code>organizer123</code><br>
+                <em>Fonctionnalités de base</em>
+            </div>
+            
+            <div class="account">
+                <strong>Freelance (Gratuit)</strong><br>
+                Email: <code>hello@indie-events.fr</code><br>
+                Mot de passe: <code>organizer123</code><br>
+                <em>Version gratuite limitée</em>
+            </div>
+        </div>
+        
+        <div class="info-box">
+            <strong>💡 Fonctionnalités du système B2B :</strong>
+            <ul>
+                <li>Tableau de bord personnalisé pour les organisateurs</li>
+                <li>Gestion des événements culturels</li>
+                <li>Statistiques et analytics</li>
+                <li>Système de facturation</li>
+                <li>Gestion des partenariats</li>
+                <li>Support client intégré</li>
+                <li>3 niveaux d'abonnement (Free, Basic, Premium)</li>
+            </ul>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="/organizer/login.php" class="btn">
+                🔐 Accéder à la connexion organisateur
+            </a>
+            <a href="/organizer/register.php" class="btn btn-secondary">
+                ✍️ Créer un nouveau compte
+            </a>
+        </div>
+        
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="/" style="color: #666; text-decoration: none;">← Retour au site principal</a>
+        </div>
+    </div>
+</body>
+</html>
