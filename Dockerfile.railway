@@ -6,46 +6,55 @@ RUN docker-php-ext-install pdo pdo_mysql mysqli
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
 
+# Set ServerName to suppress Apache warning
+RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
+
 # Copy all application source code
 COPY . /var/www/html/
 
 # Remove unnecessary files from the container
 RUN rm -rf /var/www/html/docker-compose* \
-    /var/www/html/Dockerfile \
+    /var/www/html/Dockerfile* \
     /var/www/html/README* \
     /var/www/html/*.md \
     /var/www/html/*.pdf \
     /var/www/html/*.docx \
     /var/www/html/*.pptx \
     /var/www/html/desktop.ini \
-    /var/www/html/culture-radar\ -\ Copie
+    /var/www/html/culture-radar\ -\ Copie \
+    /var/www/html/.git
 
 # Create cache directories
 RUN mkdir -p /var/www/html/cache/events \
     /var/www/html/cache/weather \
-    /var/www/html/cache/transport
+    /var/www/html/cache/transport \
+    /var/www/html/logs \
+    /var/www/html/uploads
 
 # Set proper permissions
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html \
-    && chmod -R 777 /var/www/html/cache
+    && chmod -R 777 /var/www/html/cache \
+    && chmod -R 777 /var/www/html/logs \
+    && chmod -R 777 /var/www/html/uploads
 
-# Create start script to handle Railway's PORT variable
+# Create a startup script that configures Apache to listen on Railway's PORT
 RUN echo '#!/bin/bash\n\
-if [ -z "$PORT" ]; then\n\
-  PORT=80\n\
-fi\n\
-echo "Listen $PORT" > /etc/apache2/ports.conf\n\
-echo "<VirtualHost *:$PORT>" > /etc/apache2/sites-available/000-default.conf\n\
-echo "    DocumentRoot /var/www/html" >> /etc/apache2/sites-available/000-default.conf\n\
-echo "    <Directory /var/www/html>" >> /etc/apache2/sites-available/000-default.conf\n\
-echo "        Options Indexes FollowSymLinks" >> /etc/apache2/sites-available/000-default.conf\n\
-echo "        AllowOverride All" >> /etc/apache2/sites-available/000-default.conf\n\
-echo "        Require all granted" >> /etc/apache2/sites-available/000-default.conf\n\
-echo "    </Directory>" >> /etc/apache2/sites-available/000-default.conf\n\
-echo "</VirtualHost>" >> /etc/apache2/sites-available/000-default.conf\n\
-apache2-foreground' > /start.sh && \
-chmod +x /start.sh
+PORT=${PORT:-80}\n\
+echo "Starting Apache on port $PORT"\n\
+sed -i "s/Listen 80/Listen $PORT/" /etc/apache2/ports.conf\n\
+sed -i "s/:80/:$PORT/" /etc/apache2/sites-available/000-default.conf\n\
+apache2-foreground' > /start.sh && chmod +x /start.sh
 
-# Start Apache with PORT configuration
+# Configure Apache
+RUN echo '<Directory /var/www/html>\n\
+    Options Indexes FollowSymLinks\n\
+    AllowOverride All\n\
+    Require all granted\n\
+</Directory>' >> /etc/apache2/sites-available/000-default.conf
+
+# Railway expects the app to listen on the PORT environment variable
+EXPOSE ${PORT}
+
+# Start Apache with the custom script
 CMD ["/start.sh"]
