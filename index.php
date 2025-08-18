@@ -231,7 +231,7 @@ if (empty($realEvents)) {
                         </div>
                     </div>
                 <?php else: ?>
-                    <a href="/login.php" class="btn-secondary">Connexion</a>
+                    <a href="/login-simple.php" class="btn-secondary">Connexion</a>
                     <a href="/register.php" class="cta-button">Commencer</a>
                 <?php endif; ?>
             </div>
@@ -375,9 +375,13 @@ if (empty($realEvents)) {
                             $venue = $event['venue_name'] ?? ($event['venue'] ?? 'Lieu culturel');
                             $city = $event['display_city'] ?? ($event['city'] ?? 'Paris');
                         ?>
-                        <div class="event-card" style="background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); transition: transform 0.3s;">
-                            <?php if (!empty($event['image'])): ?>
-                            <div class="event-image" style="height: 150px; background: url('<?php echo htmlspecialchars($event['image']); ?>') center/cover;">
+                        <div class="event-card" style="background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); transition: transform 0.3s; cursor: pointer;">
+                            <?php 
+                            $imageUrl = $event['image'] ?? '';
+                            // Vérifier si c'est une URL valide
+                            if (!empty($imageUrl) && (strpos($imageUrl, 'http') === 0 || strpos($imageUrl, '//') === 0)): 
+                            ?>
+                            <div class="event-image" style="height: 150px; background-image: url('<?php echo htmlspecialchars($imageUrl); ?>'); background-size: cover; background-position: center;">
                             </div>
                             <?php else: ?>
                             <div class="event-image" style="height: 150px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center;">
@@ -701,5 +705,49 @@ if (empty($realEvents)) {
     
     <!-- Scripts -->
     <script src="assets/js/main.js"></script>
+    <script>
+    // Gestion des filtres de recherche
+    document.addEventListener('DOMContentLoaded', function() {
+        const filterChips = document.querySelectorAll('.filter-chip');
+        const searchForm = document.querySelector('.search-form');
+        
+        filterChips.forEach(chip => {
+            chip.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Retirer la classe active de tous les filtres
+                filterChips.forEach(c => c.classList.remove('active'));
+                
+                // Ajouter la classe active au filtre cliqué
+                this.classList.add('active');
+                
+                // Récupérer le filtre
+                const filter = this.getAttribute('data-filter');
+                
+                // Soumettre le formulaire avec le filtre
+                const input = searchForm.querySelector('input[name="q"]');
+                const filterInput = document.createElement('input');
+                filterInput.type = 'hidden';
+                filterInput.name = 'filter';
+                filterInput.value = filter;
+                searchForm.appendChild(filterInput);
+                searchForm.submit();
+            });
+        });
+        
+        // Animation des cartes d'événements
+        const eventCards = document.querySelectorAll('.event-card');
+        eventCards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-5px)';
+                this.style.boxShadow = '0 4px 20px rgba(0,0,0,0.15)';
+            });
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+            });
+        });
+    });
+    </script>
 </body>
 </html>
