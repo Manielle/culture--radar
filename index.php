@@ -191,6 +191,11 @@ if (empty($realEvents)) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+    <!-- UNIVERSITY PROJECT NOTICE -->
+    <div style="background: linear-gradient(90deg, #8B5CF6, #3B82F6); color: white; text-align: center; padding: 0.5rem; font-size: 0.9rem; font-weight: 500; position: relative; z-index: 9999;">
+        🎓 Projet Universitaire - Site de démonstration à des fins éducatives uniquement
+    </div>
+    
     <!-- Skip to content for accessibility -->
     <a href="#main-content" class="skip-to-content">Aller au contenu principal</a>
     
@@ -686,7 +691,11 @@ if (empty($realEvents)) {
         </div>
         
         <div class="footer-bottom">
-            <p>&copy; 2024 Culture Radar. Projet étudiant fictif - Aucune transaction réelle.</p>
+            <p>&copy; 2024 Culture Radar - Projet Universitaire</p>
+            <p style="font-size: 0.85rem; opacity: 0.8; margin-top: 0.5rem;">
+                Ce site est un projet académique réalisé dans le cadre d'études universitaires. 
+                Aucune transaction réelle n'est effectuée. À des fins éducatives uniquement.
+            </p>
         </div>
     </footer>
     
