@@ -1,10 +1,19 @@
 <?php
-session_start();
-require_once __DIR__ . '/config.php';
+// Utiliser la configuration fixée pour Railway
+if (file_exists(__DIR__ . '/config-railway-fix.php')) {
+    require_once __DIR__ . '/config-railway-fix.php';
+} else {
+    require_once __DIR__ . '/config.php';
+}
+
+// Démarrer la session après la configuration
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 // Rediriger si déjà connecté
 if (isset($_SESSION['user_id'])) {
-    header('Location: /dashboard.php');
+    header('Location: /index.php');
     exit();
 }
 
@@ -19,7 +28,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Veuillez remplir tous les champs.';
     } else {
         try {
-            $pdo = Config::getPDO();
+            // Utiliser la fonction globale au lieu de Config::getPDO()
+            $pdo = function_exists('getDatabaseConnection') ? getDatabaseConnection() : Config::getPDO();
             
             // Vérifier les identifiants
             $stmt = $pdo->prepare("SELECT id, name, email, password FROM users WHERE email = ?");
@@ -32,8 +42,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['user_name'] = $user['name'];
                 $_SESSION['user_email'] = $user['email'];
                 
-                // Rediriger vers le dashboard
-                header('Location: /dashboard.php');
+                // Rediriger vers la page d'accueil
+                header('Location: /index.php');
                 exit();
             } else {
                 $error = 'Email ou mot de passe incorrect.';
@@ -44,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['user_id'] = 1;
                 $_SESSION['user_name'] = 'Utilisateur Test';
                 $_SESSION['user_email'] = $email;
-                header('Location: /dashboard.php');
+                header('Location: /index.php');
                 exit();
             }
             $error = 'Erreur de connexion. Utilisez test@culture-radar.fr / password123';

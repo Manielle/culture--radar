@@ -19,8 +19,17 @@ RUN apt-get update && apt-get install -y \
 RUN a2enmod rewrite
 RUN a2enmod headers
 
-# Copier la configuration Apache
-COPY apache.conf /etc/apache2/sites-available/000-default.conf
+# Configuration Apache pour permettre les .htaccess
+RUN echo '<Directory /var/www/html/>' > /etc/apache2/sites-available/000-default.conf \
+    && echo '    Options Indexes FollowSymLinks' >> /etc/apache2/sites-available/000-default.conf \
+    && echo '    AllowOverride All' >> /etc/apache2/sites-available/000-default.conf \
+    && echo '    Require all granted' >> /etc/apache2/sites-available/000-default.conf \
+    && echo '</Directory>' >> /etc/apache2/sites-available/000-default.conf \
+    && echo '<VirtualHost *:80>' >> /etc/apache2/sites-available/000-default.conf \
+    && echo '    DocumentRoot /var/www/html' >> /etc/apache2/sites-available/000-default.conf \
+    && echo '    ErrorLog ${APACHE_LOG_DIR}/error.log' >> /etc/apache2/sites-available/000-default.conf \
+    && echo '    CustomLog ${APACHE_LOG_DIR}/access.log combined' >> /etc/apache2/sites-available/000-default.conf \
+    && echo '</VirtualHost>' >> /etc/apache2/sites-available/000-default.conf
 
 # Copier les fichiers de l'application
 COPY . /var/www/html/
@@ -28,8 +37,17 @@ COPY . /var/www/html/
 # Définir ServerName pour supprimer l'avertissement
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
-# Donner les permissions
-RUN chown -R www-data:www-data /var/www/html
+# Créer les répertoires nécessaires et donner les permissions
+RUN mkdir -p /var/www/html/logs \
+    && mkdir -p /var/www/html/uploads \
+    && mkdir -p /var/www/html/cache \
+    && mkdir -p /var/www/html/sessions \
+    && chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 /var/www/html \
+    && chmod -R 775 /var/www/html/logs \
+    && chmod -R 775 /var/www/html/uploads \
+    && chmod -R 775 /var/www/html/cache \
+    && chmod -R 775 /var/www/html/sessions
 
 # Exposer le port
 EXPOSE 80

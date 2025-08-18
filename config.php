@@ -164,6 +164,14 @@ class Config {
      */
     public static function getDSN() {
         $db = self::database();
+        
+        // Sur Railway, utiliser TCP/IP au lieu de socket Unix
+        if (getenv('MYSQLHOST') || getenv('RAILWAY_ENVIRONMENT')) {
+            // Forcer l'utilisation de 127.0.0.1 au lieu de localhost pour éviter les sockets Unix
+            $host = $db['host'] === 'localhost' ? '127.0.0.1' : $db['host'];
+            return "mysql:host={$host};port={$db['port']};dbname={$db['name']};charset={$db['charset']}";
+        }
+        
         return "mysql:host={$db['host']};port={$db['port']};dbname={$db['name']};charset={$db['charset']}";
     }
     
@@ -187,12 +195,13 @@ class Config {
             
             return $pdo;
         } catch (PDOException $e) {
+            error_log("Database connection failed: " . $e->getMessage());
             if (self::isDebug()) {
-                echo "Database connection error: " . $e->getMessage();
+                // Ne pas afficher directement l'erreur pour éviter les problèmes de headers
                 throw $e;
             } else {
-                error_log("Database connection failed: " . $e->getMessage());
-                die("Database connection failed. Please check your configuration.");
+                // Retourner null au lieu de die() pour permettre une gestion d'erreur gracieuse
+                return null;
             }
         }
     }
