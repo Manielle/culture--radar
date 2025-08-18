@@ -525,8 +525,9 @@ const Storage = {
             // Try to parse as JSON, if it fails return the raw value
             try {
                 return JSON.parse(item);
-            } catch {
+            } catch (e) {
                 // If it's not valid JSON, return as string
+                console.log(`Note: ${key} is stored as plain string, not JSON`);
                 return item;
             }
         } catch (error) {
@@ -556,17 +557,22 @@ const Storage = {
  * Performance monitoring
  */
 function measurePerformance() {
-    if ('performance' in window) {
+    if ('performance' in window && performance.timing) {
         window.addEventListener('load', () => {
-            const timing = performance.timing;
-            const loadTime = timing.loadEventEnd - timing.navigationStart;
-            console.log(`Page load time: ${loadTime}ms`);
-            
-            // Send to analytics if needed
-            const consent = Storage.get('cookieConsent');
-            if (consent && (consent === 'accepted' || consent.status === 'accepted')) {
-                // Future: Send performance data to analytics
-            }
+            setTimeout(() => {
+                const timing = performance.timing;
+                const loadTime = timing.loadEventEnd - timing.navigationStart;
+                // Only log if we have valid timing data
+                if (loadTime > 0 && loadTime < 60000) { // Less than 60 seconds
+                    console.log(`Page load time: ${loadTime}ms`);
+                }
+                
+                // Send to analytics if needed
+                const consent = Storage.get('cookieConsent');
+                if (consent && (consent === 'accepted' || consent.status === 'accepted')) {
+                    // Future: Send performance data to analytics
+                }
+            }, 100); // Wait 100ms for load event to complete
         });
     }
 }
