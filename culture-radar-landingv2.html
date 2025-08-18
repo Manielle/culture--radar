@@ -32,6 +32,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
+    <!-- Accessibility Styles -->
+    <link rel="stylesheet" href="assets/css/accessibility.css">
+    
     <style>
         * {
             margin: 0;
@@ -1192,6 +1195,7 @@
                 <li role="none"><a href="#features" role="menuitem">Fonctionnalités</a></li>
                 <li role="none"><a href="#how" role="menuitem">Comment ça marche</a></li>
                 <li role="none"><a href="#about" role="menuitem">À propos</a></li>
+                <li role="none"><a href="/contact.php" role="menuitem">Contact</a></li>
             </ul>
             <a href="#inscription" class="cta-button" role="button" aria-label="Commencer votre découverte culturelle">Commencer</a>
         </nav>
@@ -1719,5 +1723,8 @@
             trackEvent('page_performance', 'load_time', Math.round(loadTime));
         });
     </script>
+    
+    <!-- Accessibility Script -->
+    <script src="assets/js/accessibility.js"></script>
 </body>
 </html>

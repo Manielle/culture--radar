@@ -186,6 +186,7 @@ if (empty($realEvents)) {
     
     <!-- Styles -->
     <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/accessibility.css">
     
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -207,7 +208,7 @@ if (empty($realEvents)) {
     
     <!-- Header -->
     <header class="header" role="banner">
-        <nav class="nav" role="navigation" aria-label="Navigation principale">
+        <nav class="nav" role="navigation" aria-label="Navigation principale" itemscope itemtype="http://schema.org/SiteNavigationElement">
             <a href="/" class="logo" aria-label="Culture Radar - Retour à l'accueil">
                 <div class="location-pin-icon" aria-hidden="true"></div>
                 Culture Radar
@@ -218,6 +219,7 @@ if (empty($realEvents)) {
                 <li role="none"><a href="#categories" role="menuitem">Catégories</a></li>
                 <li role="none"><a href="#features" role="menuitem">Fonctionnalités</a></li>
                 <li role="none"><a href="#how" role="menuitem">Comment ça marche</a></li>
+                <li role="none"><a href="/contact.php" role="menuitem">Contact</a></li>
                 <?php if($isLoggedIn): ?>
                     <li role="none"><a href="/dashboard.php" role="menuitem">Mon Espace</a></li>
                 <?php endif; ?>
@@ -676,6 +678,7 @@ if (empty($realEvents)) {
             <div class="footer-section">
                 <h3>Ressources</h3>
                 <a href="/about.php">À propos</a>
+                <a href="/contact.php">Contact</a>
                 <a href="/help.php">Centre d'aide</a>
                 <a href="/blog.php">Blog</a>
                 <a href="/partners.php">Partenaires</a>
@@ -714,6 +717,7 @@ if (empty($realEvents)) {
     
     <!-- Scripts -->
     <script src="assets/js/main.js"></script>
+    <script src="assets/js/accessibility.js"></script>
     <script>
     // Gestion des filtres de recherche
     document.addEventListener('DOMContentLoaded', function() {
