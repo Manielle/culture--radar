@@ -360,6 +360,59 @@ if (empty($realEvents)) {
                         <button type="button" class="filter-chip" data-filter="nearby">À proximité</button>
                     </div>
                 </form>
+                
+                <!-- Événements populaires -->
+                <div class="popular-events" style="margin-top: 3rem;">
+                    <h3 style="text-align: center; margin-bottom: 2rem; color: #333;">Événements populaires aujourd'hui</h3>
+                    <div class="events-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
+                        <?php 
+                        // Afficher les premiers événements
+                        $popularEvents = array_slice($realEvents, 0, 8);
+                        foreach ($popularEvents as $event): 
+                            $category = $event['category'] ?? 'culture';
+                            $priceText = isset($event['is_free']) && $event['is_free'] ? 'Gratuit' : 
+                                        (isset($event['price']) && $event['price'] ? $event['price'] . '€' : 'Prix libre');
+                            $venue = $event['venue_name'] ?? ($event['venue'] ?? 'Lieu culturel');
+                            $city = $event['display_city'] ?? ($event['city'] ?? 'Paris');
+                        ?>
+                        <div class="event-card" style="background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); transition: transform 0.3s;">
+                            <?php if (!empty($event['image'])): ?>
+                            <div class="event-image" style="height: 150px; background: url('<?php echo htmlspecialchars($event['image']); ?>') center/cover;">
+                            </div>
+                            <?php else: ?>
+                            <div class="event-image" style="height: 150px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-calendar-alt" style="font-size: 3rem; color: white;"></i>
+                            </div>
+                            <?php endif; ?>
+                            <div class="event-content" style="padding: 1.5rem;">
+                                <span class="event-category" style="display: inline-block; padding: 0.25rem 0.75rem; background: #f0f0ff; color: #667eea; border-radius: 20px; font-size: 0.8rem; margin-bottom: 0.5rem;">
+                                    <?php echo ucfirst($category); ?>
+                                </span>
+                                <h4 style="margin: 0.5rem 0; color: #333; font-size: 1.1rem;">
+                                    <?php echo htmlspecialchars(substr($event['title'], 0, 50)) . (strlen($event['title']) > 50 ? '...' : ''); ?>
+                                </h4>
+                                <div class="event-meta" style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; color: #666; font-size: 0.9rem;">
+                                    <span><i class="fas fa-map-marker-alt" style="width: 20px;"></i> <?php echo htmlspecialchars($venue); ?></span>
+                                    <span><i class="fas fa-euro-sign" style="width: 20px;"></i> <?php echo $priceText; ?></span>
+                                    <?php if (!empty($event['date_start'])): ?>
+                                    <span><i class="fas fa-calendar" style="width: 20px;"></i> <?php echo date('d/m H:i', strtotime($event['date_start'])); ?></span>
+                                    <?php endif; ?>
+                                </div>
+                                <a href="/event-details.php?id=<?php echo urlencode($event['id']); ?>" 
+                                   style="display: inline-block; margin-top: 1rem; color: #667eea; text-decoration: none; font-weight: 500;">
+                                    Voir plus →
+                                </a>
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 2rem;">
+                        <a href="/discover.php" class="btn-primary" style="display: inline-block; padding: 0.75rem 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 50px; font-weight: 600;">
+                            Voir tous les événements →
+                        </a>
+                    </div>
+                </div>
             </div>
         </section>
         
