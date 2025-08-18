@@ -12,6 +12,11 @@ RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 # Copy all application source code
 COPY . /var/www/html/
 
+# Use simpler .htaccess for Railway
+RUN if [ -f /var/www/html/.htaccess.railway ]; then \
+    mv /var/www/html/.htaccess.railway /var/www/html/.htaccess; \
+fi
+
 # Remove unnecessary files from the container
 RUN rm -rf /var/www/html/docker-compose* \
     /var/www/html/Dockerfile* \
