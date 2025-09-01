@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Culture Radar - Test Railway</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        .info {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1rem;
+            border-radius: 10px;
+            margin: 1rem 0;
+        }
+        a {
+            color: #4ade80;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧭 Culture Radar</h1>
+        <p>Le serveur fonctionne correctement sur Railway!</p>
+        
+        <div class="info">
+            <h2>Test des endpoints:</h2>
+            <p><a href="/health.php">✅ Health Check (JSON)</a></p>
+            <p><a href="/index.php">🏠 Page d'accueil</a></p>
+            <p><a href="/api/weather.php?action=current&city=Paris">🌤️ API Météo</a></p>
+            <p><a href="/contact.php">📧 Formulaire de contact</a></p>
+        </div>
+        
+        <div class="info">
+            <h2>Informations serveur:</h2>
+            <p>Port: <span id="port">Chargement...</span></p>
+            <p>Heure serveur: <?php echo date('Y-m-d H:i:s'); ?></p>
+        </div>
+    </div>
+    
+    <script>
+        // Fetch health check to get port info
+        fetch('/health.php')
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('port').textContent = 
+                    data.environment?.server_port || 'Inconnu';
+            })
+            .catch(e => {
+                document.getElementById('port').textContent = 'Erreur';
+            });
+    </script>
+</body>
+</html>

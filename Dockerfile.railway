@@ -45,11 +45,17 @@ RUN chown -R www-data:www-data /var/www/html \
 
 # Create a startup script that configures Apache to listen on Railway's PORT
 RUN echo '#!/bin/bash\n\
+# Railway provides PORT environment variable\n\
 PORT=${PORT:-80}\n\
+echo "PORT environment variable: $PORT"\n\
 echo "Starting Apache on port $PORT"\n\
+# Update Apache configuration to use the PORT\n\
 sed -i "s/Listen 80/Listen $PORT/" /etc/apache2/ports.conf\n\
-sed -i "s/:80/:$PORT/" /etc/apache2/sites-available/000-default.conf\n\
-apache2-foreground' > /start.sh && chmod +x /start.sh
+sed -i "s/<VirtualHost \\*:80>/<VirtualHost *:$PORT>/" /etc/apache2/sites-available/000-default.conf\n\
+# Also update any other port references\n\
+grep -l ":80" /etc/apache2/sites-available/* | xargs -r sed -i "s/:80/:$PORT/g"\n\
+# Start Apache in foreground\n\
+exec apache2-foreground' > /start.sh && chmod +x /start.sh
 
 # Configure Apache to use public directory as DocumentRoot
 RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|g' /etc/apache2/sites-available/000-default.conf && \
