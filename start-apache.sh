@@ -30,6 +30,7 @@ EOF
 cat > /etc/apache2/sites-available/000-default.conf << EOF
 <VirtualHost *:${PORT}>
     ServerAdmin webmaster@localhost
+    ServerName localhost
     DocumentRoot /var/www/html/public
     
     <Directory /var/www/html/public>
@@ -38,9 +39,21 @@ cat > /etc/apache2/sites-available/000-default.conf << EOF
         Require all granted
     </Directory>
     
+    # Allow proxy headers from Railway
+    SetEnvIf X-Forwarded-Proto https HTTPS=on
+    
     ErrorLog \${APACHE_LOG_DIR}/error.log
     CustomLog \${APACHE_LOG_DIR}/access.log combined
 </VirtualHost>
+EOF
+
+# Also update Apache's main config to ensure it listens correctly
+cat >> /etc/apache2/apache2.conf << EOF
+
+# Railway specific configuration
+ServerName localhost
+AcceptFilter http none
+AcceptFilter https none
 EOF
 
 # Copy to sites-enabled
