@@ -50,8 +50,8 @@ RUN chmod +x /start-apache.sh
 # Remove default Apache configuration that might conflict
 RUN rm -f /etc/apache2/sites-enabled/000-default.conf
 
-# Railway expects the app to listen on the PORT environment variable
-EXPOSE ${PORT}
+# Railway will provide the PORT at runtime, we don't need to EXPOSE it
+# The container will listen on whatever PORT Railway provides
 
 # Start Apache with the custom script
 CMD ["/start-apache.sh"]

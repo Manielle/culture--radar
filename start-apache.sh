@@ -15,7 +15,7 @@ echo "=========================================="
 cat > /etc/apache2/ports.conf << EOF
 # Apache ports configuration for Railway
 # Automatically configured to use PORT environment variable
-Listen ${PORT}
+Listen 0.0.0.0:${PORT}
 
 <IfModule ssl_module>
     Listen 443
