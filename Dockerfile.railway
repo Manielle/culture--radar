@@ -51,8 +51,9 @@ sed -i "s/Listen 80/Listen $PORT/" /etc/apache2/ports.conf\n\
 sed -i "s/:80/:$PORT/" /etc/apache2/sites-available/000-default.conf\n\
 apache2-foreground' > /start.sh && chmod +x /start.sh
 
-# Configure Apache
-RUN echo '<Directory /var/www/html>\n\
+# Configure Apache to use public directory as DocumentRoot
+RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|g' /etc/apache2/sites-available/000-default.conf && \
+    echo '<Directory /var/www/html/public>\n\
     Options Indexes FollowSymLinks\n\
     AllowOverride All\n\
     Require all granted\n\
