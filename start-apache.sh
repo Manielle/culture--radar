@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Railway startup script for Apache
-# This script configures Apache to listen on the PORT environment variable
+# Force Apache to listen on port 80
 
-# Get the PORT from environment (Railway provides this)
-PORT=${PORT:-8080}
+# Use port 80 regardless of Railway's PORT variable
+PORT=80
 
 echo "=========================================="
 echo "Culture Radar - Starting Apache"
